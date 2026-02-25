@@ -17,3 +17,17 @@ Expertise in high-performance CLOB and Perp connector development with focus on 
 | **Apex** | StarkEx / ZKEVM | StarkEx | ✅ Verified |
 | **Bluefin** | Sui Move | Sui Auth | ✅ Verified |
 | **Paradex** | Starknet | STARK | ✅ Verified |
+
+
+
+
+
+
+
+
+### ☕ Support the Infrastructure
+If these V2.1 connectors or open-source implementations provide value to your trading operations, consider supporting further development.
+
+**Multichain EVM Support (PLS, ETH, ARB, BASE, BERA):**
+`0xa32ca744f86a91eaf567e2be4902f64bc33c2813
+> *Contributions help cover RPC node costs, stress-testing, and the development of new connectors.*
