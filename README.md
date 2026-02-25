@@ -1,16 +1,17 @@
-## Hi there 👋
+# 🛠️ Technical Portfolio: Quantitative Infrastructure
 
-<!--
-**ipezygj/ipezygj** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+## ⚡ Hummingbot Gateway V2.1 Specialist
+Expertise in high-performance CLOB and Perp connector development with focus on security and modularity.
 
-Here are some ideas to get you started:
-
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+### 🏦 Integrated Connectors (Standardized V2.1)
+| Exchange | Ecosystem | Auth Tech | Status |
+| :--- | :--- | :--- | :--- |
+| **Vertex** | Arbitrum / EVM | EIP-712 | ✅ Verified |
+| **Aevo** | OP Stack / L2 | EIP-191 | ✅ Verified |
+| **Hyperliquid** | Hyperliquid L1 | EIP-712 | ✅ Verified |
+| **Orderly** | Orderly L3 | HMAC | ✅ Verified |
+| **GRVT** | ZK-Sync | ZK-Proof | ✅ Verified |
+| **dYdX** | Cosmos / v4 | Starkware | ✅ Verified |
+| **Apex** | StarkEx / ZKEVM | StarkEx | ✅ Verified |
+| **Bluefin** | Sui Move | Sui Auth | ✅ Verified |
+| **Paradex** | Starknet | STARK | ✅ Verified |
