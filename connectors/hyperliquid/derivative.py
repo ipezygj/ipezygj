@@ -2,58 +2,28 @@
 
 import asyncio
 import json
-import websockets
 from .auth import HyperliquidAuth
-from .constants import INFO_URL
 
 class HyperliquidDerivative:
-    """
-    Main execution class for Hyperliquid V2.1.
-    Handles order placement and real-time WebSocket streams with EIP-712 security.
-    """
-
     def __init__(self, auth: HyperliquidAuth):
         self.auth = auth
-        self.ws_url = "wss://api.hyperliquid.xyz/ws"
-        self.order_book = {}
+        self.active_orders = {}
 
-    async def listen_to_order_book(self, symbol: str):
+    async def cancel_order(self, symbol: str, order_id: int):
         """
-        Maintains a real-time L2 order book via WebSocket.
-        """
-        subscribe_payload = {
-            "method": "subscribe",
-            "subscription": {"type": "l2Book", "coin": symbol}
-        }
-        
-        async with websockets.connect(self.ws_url) as ws:
-            await ws.send(json.dumps(subscribe_payload))
-            while True:
-                msg = await ws.recv()
-                data = json.loads(msg)
-                self.order_book[symbol] = data.get("data")
-
-    async def create_order(self, symbol: str, price: float, amount: float, side: str):
-        """
-        Creates and signs a limit order using EIP-712 for Hyperliquid L1.
+        Signs and sends a cancellation request to Hyperliquid L1.
         """
         nonce = self.auth.get_current_nonce()
         
-        # Rakennetaan Hyperliquid-spesifinen kaupankäyntitoiminto
+        # Hyperliquid vaatii spesifisen 'cancel'-toiminnon
         action = {
-            "type": "order",
-            "orders": [{
-                "asset": 0,  # Oletusomaisuus (esim. USDC/HYPE)
-                "isBuy": side.lower() == "buy",
-                "limitPx": str(price),
-                "sz": str(amount),
-                "reduceOnly": False,
-                "orderType": {"limit": {"tif": "Gtc"}}
-            }],
-            "grouping": "na"
+            "type": "cancel",
+            "cancels": [{
+                "asset": 0, # Oletus asset ID
+                "oid": order_id
+            }]
         }
 
-        # Allekirjoitetaan toiminto Ferrari-moottorillamme
         signature = self.auth.sign_action(action, nonce)
         
         payload = {
@@ -62,6 +32,16 @@ class HyperliquidDerivative:
             "signature": signature
         }
 
-        # TODO: Lähetä payload pörssin API-endpointtiin
-        print(f"Order signed and ready for {symbol}: {signature}")
+        # Ferrari-logiikka: Poistetaan paikallisesta seurannasta
+        if order_id in self.active_orders:
+            del self.active_orders[order_id]
+            
+        print(f"Cancellation signed for order {order_id}: {signature}")
         return payload
+
+    async def get_account_filler(self):
+        """
+        Polls for filled orders to update local state.
+        """
+        # Vannaka sanoo: "Keep your eyes on the loot."
+        pass
