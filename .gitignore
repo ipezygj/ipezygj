@@ -1,0 +1,7 @@
+# Käsityöläisen liikesalaisuudet
+strategy.py
+logic.py
+*.env
+lokit.txt
+tila.txt
+__pycache__/
