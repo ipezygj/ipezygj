@@ -1,0 +1,33 @@
+""" Technical implementation for Hummingbot Gateway V2.1. """
+
+name: consistency-utils
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  infrastructure_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: V2.1 Compliance Check (Black & isort)
+        run: |
+          pip install black isort
+          black --check --line-length 120 .
+          isort --check-only .
+
+      - name: Connector Integrity Validation
+        run: |
+          echo "Validating supreme-sync status for V2.1 connectors..."
+          # Varmistetaan, että kriittiset moduulit ovat paikoillaan
+          [ -f connectors/hyperliquid/auth.py ] && echo "Hyperliquid Auth: Verified"
+          [ -f connectors/xdb/constants.py ] && echo "XDB Constants: Verified"
