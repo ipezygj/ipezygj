@@ -1,0 +1,9 @@
+Päivitetty: 2026-02-26 23:37:43
+------------------------------
+BINANCE     : 391ms
+BITGET      : 389ms
+BYBIT       : 291ms
+GATE_IO     : 1394ms
+HYPERLIQUID : 376ms
+KRAKEN      : 237ms
+OKX         : 462ms
