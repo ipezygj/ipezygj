@@ -1,15 +1,24 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
 
+from eth_account import Account
+
 class XDBAuth:
     """
     Standardized Auth for XDB Chain.
     Designed for Hummingbot Gateway V2.1.
     """
     def __init__(self, private_key: str):
-        self.private_key = private_key
+        self.account = Account.from_key(private_key)
+        self.address = self.account.address
 
-    def generate_signature(self, message: dict):
+    def sign_transaction(self, transaction: dict):
         """
-        To be implemented based on XDB Chain signing requirements (EIP-712 or Stellar-style).
+        Signs an XDB Chain transaction payload.
+        Vannaka says: "A sharp blade needs a steady hand."
         """
-        pass
+        # XDB Chain on EVM-pohjainen, joten käytetään standardia allekirjoitusta
+        signed_txn = Account.sign_transaction(transaction, self.account.key)
+        return signed_txn.rawTransaction.hex()
+
+    def get_address(self):
+        return self.address
