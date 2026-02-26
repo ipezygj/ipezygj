@@ -1,41 +1,52 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
 
-import hmac
-import hashlib
 import time
+from eth_account import Account
 from eth_account.messages import encode_typed_data
-from .constants import CHAIN_ID
 
 class HyperliquidAuth:
     """
-    Handles EIP-712 signing for Hyperliquid L1.
-    Ensures secure communication between Gateway and Exchange.
+    Standardized EIP-712 Auth for Hyperliquid.
+    Designed for Hummingbot Gateway V2.1.
     """
-
     def __init__(self, private_key: str):
-        self.private_key = private_key
+        self.account = Account.from_key(private_key)
+        self.address = self.account.address
 
     def sign_action(self, action: dict, nonce: int):
         """
-        Signs an exchange action using EIP-712 standard.
+        Signs a trading action using EIP-712.
         """
-        # Hyperliquid specific domain for EIP-712
+        # Hyperliquid-spesifinen domain-rakenne
         domain = {
             "name": "Exchange",
             "version": "1",
-            "chainId": CHAIN_ID,
+            "chainId": 1337,  # Hyperliquid L1 sisäinen ID
             "verifyingContract": "0x0000000000000000000000000000000000000000"
         }
-        
-        # Simplified example of the signing structure
-        # In V2.1, this is mapped to the derivative.py execution flow
+
+        # Tämä on se "taika", joka tekee kaupankäynnistä mahdollista
         data = {
-            "domain": domain,
-            "message": {
-                "action": action,
-                "nonce": nonce
+            "types": {
+                "EIP712Domain": [
+                    {"name": "name", "type": "string"},
+                    {"name": "version", "type": "string"},
+                    {"name": "chainId", "type": "uint256"},
+                    {"name": "verifyingContract", "type": "address"}
+                ],
+                "Agent": [
+                    {"name": "source", "type": "string"},
+                    {"name": "connectionId", "type": "bytes32"}
+                ]
             },
-            "primaryType": "Agent"
+            "primaryType": "Agent",
+            "domain": domain,
+            "message": action
         }
-        
-        return data  # Actual signing handled by eth_account in derivative.py
+
+        signed = self.account.sign_message(encode_typed_data(full_message=data))
+        return signed.signature.hex()
+
+    def get_current_nonce(self):
+        """ Returns millisecond timestamp for nonce. """
+        return int(time.time() * 1000)
