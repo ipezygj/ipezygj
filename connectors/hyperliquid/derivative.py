@@ -1,29 +1,43 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
 
 import asyncio
+import json
+import websockets
 from .auth import HyperliquidAuth
-from .constants import INFO_URL, EXCHANGE_URL
+from .constants import INFO_URL
 
 class HyperliquidDerivative:
     """
     Main execution class for Hyperliquid V2.1.
-    Handles order placement, cancellations, and WebSocket streams.
+    Handles order placement and real-time WebSocket streams.
     """
 
     def __init__(self, auth: HyperliquidAuth):
         self.auth = auth
-        self.active_orders = {}
+        self.ws_url = "wss://api.hyperliquid.xyz/ws"
+        self.order_book = {}
 
-    async def get_market_data(self):
+    async def listen_to_order_book(self, symbol: str):
         """
-        Fetches the latest order book from Hyperliquid L1.
+        Subscribe to real-time L2 order book updates.
         """
-        # Technical placeholder for V2.1 Gateway implementation
-        pass
+        subscribe_payload = {
+            "method": "subscribe",
+            "subscription": {"type": "l2Book", "coin": symbol}
+        }
+        
+        async with websockets.connect(self.ws_url) as ws:
+            await ws.send(json.dumps(subscribe_payload))
+            while True:
+                msg = await ws.recv()
+                data = json.loads(msg)
+                # Ferrari-analyysi: Tässä käsitellään tilauskirjan päivitykset
+                self.order_book[symbol] = data.get("data")
+                print(f"Update received for {symbol}") # Technical log
 
     async def place_order(self, symbol: str, price: float, amount: float, side: str):
         """
         Submits a signed order to the Hyperliquid exchange.
         """
-        # Order logic flow for Gateway V2.1
+        # Tämä kytketään myöhemmin auth.py:n allekirjoitukseen
         pass
