@@ -1,38 +1,34 @@
-# Technical implementation for Hummingbot Gateway V2.1.
-import asyncio
+""" Technical implementation for Hummingbot Gateway V2.1. """
+
+import httpx
 import time
-from .auth import XDBAuth
-from .constants import XDB_MAINNET_RPC, XDB_CHAIN_ID
+from .constants import XDB_HORIZON_URL
 
 class XDBChainDerivative:
-    def __init__(self, auth: XDBAuth):
+    def __init__(self, auth=None):
         self.auth = auth
-        self.rpc_url = XDB_MAINNET_RPC
-        self.last_sync_time = 0
+        self.url = XDB_HORIZON_URL
+        self.last_latency = 0
 
     async def check_network_health(self):
         """
-        Ensures the connection to XDB Chain is optimal.
-        Vannaka says: "A dull blade fails in the heat of battle."
+        Tarkistaa XDB Horizon -verkon tilan.
+        Ferrari-analyysi: Mitataan todellinen REST-vasteaika.
         """
-        # Ferrari-analyysi: Tarkistetaan lohkon korkeus ja latenssi
         try:
             start_time = time.time()
-            # Tähän tulisi RPC-kutsu getBlockNumber
-            latency = time.time() - start_time
-            print(f"XDB Network Health: Green (Latency: {latency:.3f}s)")
-            return True
-        except Exception as e:
-            print(f"XDB Network Warning: Connection unstable. Reconnecting...")
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(self.url)
+            
+            if resp.status_code == 200:
+                self.last_latency = (time.time() - start_time) * 1000
+                return True
+            return False
+        except Exception:
             return False
 
-    async def maintain_liquidity_gate(self):
-        """
-        Maintains the bridge between the bot and XDB Chain.
-        """
-        while True:
-            is_healthy = await self.check_network_health()
-            if not is_healthy:
-                await asyncio.sleep(5) # Odotetaan ennen uutta yritystä
-                continue
-            await asyncio.sleep(60) # Tarkistetaan kerran minuutissa
+    def get_metrics(self):
+        """ Palauttaa diagnostiikkadatat. """
+        return {
+            "latency": f"{int(self.last_latency)}ms" if self.last_latency > 0 else "N/A"
+        }

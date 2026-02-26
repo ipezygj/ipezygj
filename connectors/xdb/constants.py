@@ -1,17 +1,17 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
 
-# XDB Chain Network Configuration
-# Vannaka says: "Focus on the destination, and the path will reveal itself."
+# XDB Chain Horizon Configuration (Native Network)
+# Vannaka sanoo: "Oikea polku löytyy, kun asetamme maalin oikein."
+XDB_HORIZON_URL = "https://horizon.livenet.xdbchain.com/"
 
-XDB_MAINNET_RPC = "https://rpc.xdbchain.com"
-XDB_CHAIN_ID = 111  # Official Chain ID for XDB Mainnet
-XDB_CURRENCY_SYMBOL = "XDB"
+# Network Passphrase on kriittinen natiiveille transaktioille
+XDB_NETWORK_PASSPHRASE = "Public Global XDB Chain Network ; June 2021"
 
-# Gateway V2.1 Standardized Endpoints
-# Ferrari-analyysi: Nämä vakiot pitävät huolen, ettei koodissa ole "magic strings" -riskejä.
-DEFAULT_GAS_LIMIT = 21000
-MAX_FEE_PER_GAS = "1000000000"  # 1 Gwei oletuksena, säädetään verkon mukaan
+# Gateway V2.1 Standardized Settings
+# Ferrari-analyysi: Nämä asetukset varmistavat optimaalisen tiedonkulun REST-rajapinnassa.
+UPDATE_INTERVAL = 3.0
+USER_AGENT = "Hummingbot/V2.1 (XDB Native Connector)"
 
 # Connector Metadata
-CONNECTOR_NAME = "xdb_chain"
+CONNECTOR_NAME = "xdb_chain_native"
 GATEWAY_V21_COMPLIANT = True

@@ -3,77 +3,84 @@
 import asyncio
 import time
 import os
-import sys
+import httpx
+from termcolor import colored
+import urllib3
+# Ferrari-analyysi: Tuodaan uusi XDB-natiivi Auth
+from stellar_sdk import Keypair
 
-# TUODAAN ASETUKSET CONSTANTS-TIEDOSTOSTA
-try:
-    import httpx
-    from termcolor import colored
-    import urllib3
-    import constants as c  # Nyt asetukset löytyvät c.XDB_RPC jne.
-except ImportError as e:
-    print(f"\n⚠️ VIRHE TUONNISSA: {e}")
-    sys.exit(1)
+# --- KONFIGURAATIO ---
+XDB_HORIZON = "https://horizon.livenet.xdbchain.com/"
+HYPERLIQUID_API = "https://api.hyperliquid.xyz/info"
+UPDATE_INTERVAL = 3.0
 
-class MasterDashboard:
+class StealthEngine:
     def __init__(self):
-        # Käytetään constants.py tiedoston arvoja
-        self.chains = {
-            "HYPERLIQUID": {"url": c.HYPERLIQUID_API, "method": "POST", "payload": {"type": "meta"}, "status": "OFFLINE", "latency": "0ms"},
-            "VERTEX":      {"url": c.VERTEX_GATEWAY, "method": "POST", "payload": {"type": "status"}, "status": "OFFLINE", "latency": "0ms"},
-            "XDB CHAIN":   {"url": c.XDB_RPC, "method": "POST", "payload": {"jsonrpc":"2.0","method":"net_version","params":[],"id":1}, "status": "OFFLINE", "latency": "0ms"}
-        }
-        self.headers = {"User-Agent": c.USER_AGENT, "Content-Type": "application/json"}
+        self.url_xdb = XDB_HORIZON
+        self.url_hl = HYPERLIQUID_API
+        self.xdb_status = "OFFLINE"
+        self.xdb_latency = "N/A"
+        self.hl_status = "OFFLINE"
+        self.hl_latency = "N/A"
+        
+        # Luodaan XDB-natiivi avainpari monitorointia varten
+        # Huom: Tämä luo uuden osoitteen joka kerta, kunnes tallennamme seedin
+        self.kp = Keypair.random()
+        self.xdb_address = self.kp.public_key
 
-    async def get_latency(self, name):
-        info = self.chains[name]
+    async def check_xdb(self):
         try:
             start = time.time()
-            async with httpx.AsyncClient(headers=self.headers, verify=False, timeout=5.0) as client:
-                if info["method"] == "POST":
-                    resp = await client.post(info["url"], json=info["payload"])
-                else:
-                    resp = await client.get(info["url"])
-
-                if resp.status_code < 400:
-                    ms = int((time.time() - start) * 1000)
-                    info["status"] = "ONLINE"
-                    info["latency"] = f"{ms}ms"
-                else:
-                    info["status"] = f"ERR {resp.status_code}"
-                    info["latency"] = "N/A"
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(self.url_xdb)
+            if resp.status_code == 200:
+                self.xdb_latency = f"{int((time.time() - start) * 1000)}ms"
+                self.xdb_status = "ONLINE"
+                return True
+            return False
         except Exception:
-            info["status"] = "OFFLINE"
-            info["latency"] = "N/A"
+            self.xdb_status = "OFFLINE"
+            return False
+
+    async def check_hl(self):
+        try:
+            start = time.time()
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.post(self.url_hl, json={"type": "meta"})
+            if resp.status_code == 200:
+                self.hl_latency = f"{int((time.time() - start) * 1000)}ms"
+                self.hl_status = "ONLINE"
+                return True
+            return False
+        except Exception:
+            self.hl_status = "OFFLINE"
+            return False
 
     def render(self):
         os.system('cls' if os.name == 'nt' else 'clear')
-        # Otsikko haetaan constantseista
-        print(colored(c.DASHBOARD_TITLE, "yellow", attrs=["bold"]))
-        print(colored("="*65, "grey"))
-        for name, info in self.chains.items():
-            s_color = "green" if info["status"] == "ONLINE" else "red"
-            print(f"{colored(name.ljust(15), 'white')} | "
-                  f"STATUS: {colored(info['status'].ljust(8), s_color)} | "
-                  f"LATENCY: {colored(info['latency'].rjust(8), 'white')}")
-        print(colored("="*65, "grey"))
+        print(colored("🏎️  STEALTH MASTER DASHBOARD V2.1 [XDB NATIVE] 🏎️", "yellow", attrs=["bold"]))
+        print(colored("="*70, "grey"))
+        
+        hl_color = "green" if self.hl_status == "ONLINE" else "red"
+        print(f"{'HYPERLIQUID'.ljust(15)} | STATUS: {colored(self.hl_status.ljust(8), hl_color)} | LATENCY: {str(self.hl_latency).rjust(8)}")
+        
+        xdb_color = "green" if self.xdb_status == "ONLINE" else "red"
+        print(f"{'XDB CHAIN'.ljust(15)} | STATUS: {colored(self.xdb_status.ljust(8), xdb_color)} | LATENCY: {str(self.xdb_latency).rjust(8)}")
+        
+        print(colored("="*70, "grey"))
+        print(colored(f"XDB Wallet (Native G-Addr): {self.xdb_address}", "cyan"))
         print(colored(f"Päivitetty: {time.strftime('%H:%M:%S')}", "grey"))
 
-    async def update_loop(self):
+    async def loop(self):
         while True:
-            for name in self.chains:
-                await self.get_latency(name)
-                await asyncio.sleep(0.5)
+            await asyncio.gather(self.check_xdb(), self.check_hl())
             self.render()
-            await asyncio.sleep(c.UPDATE_INTERVAL)
-
-async def main():
-    db = MasterDashboard()
-    await db.update_loop()
+            await asyncio.sleep(UPDATE_INTERVAL)
 
 if __name__ == "__main__":
     urllib3.disable_warnings()
+    engine = StealthEngine()
     try:
-        asyncio.run(main())
+        asyncio.run(engine.loop())
     except KeyboardInterrupt:
         print("\nSammutettu.")
