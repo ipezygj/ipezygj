@@ -9,7 +9,7 @@ from .constants import INFO_URL
 class HyperliquidDerivative:
     """
     Main execution class for Hyperliquid V2.1.
-    Handles order placement and real-time WebSocket streams.
+    Handles order placement and real-time WebSocket streams with EIP-712 security.
     """
 
     def __init__(self, auth: HyperliquidAuth):
@@ -19,7 +19,7 @@ class HyperliquidDerivative:
 
     async def listen_to_order_book(self, symbol: str):
         """
-        Subscribe to real-time L2 order book updates.
+        Maintains a real-time L2 order book via WebSocket.
         """
         subscribe_payload = {
             "method": "subscribe",
@@ -31,13 +31,37 @@ class HyperliquidDerivative:
             while True:
                 msg = await ws.recv()
                 data = json.loads(msg)
-                # Ferrari-analyysi: Tässä käsitellään tilauskirjan päivitykset
                 self.order_book[symbol] = data.get("data")
-                print(f"Update received for {symbol}") # Technical log
 
-    async def place_order(self, symbol: str, price: float, amount: float, side: str):
+    async def create_order(self, symbol: str, price: float, amount: float, side: str):
         """
-        Submits a signed order to the Hyperliquid exchange.
+        Creates and signs a limit order using EIP-712 for Hyperliquid L1.
         """
-        # Tämä kytketään myöhemmin auth.py:n allekirjoitukseen
-        pass
+        nonce = self.auth.get_current_nonce()
+        
+        # Rakennetaan Hyperliquid-spesifinen kaupankäyntitoiminto
+        action = {
+            "type": "order",
+            "orders": [{
+                "asset": 0,  # Oletusomaisuus (esim. USDC/HYPE)
+                "isBuy": side.lower() == "buy",
+                "limitPx": str(price),
+                "sz": str(amount),
+                "reduceOnly": False,
+                "orderType": {"limit": {"tif": "Gtc"}}
+            }],
+            "grouping": "na"
+        }
+
+        # Allekirjoitetaan toiminto Ferrari-moottorillamme
+        signature = self.auth.sign_action(action, nonce)
+        
+        payload = {
+            "action": action,
+            "nonce": nonce,
+            "signature": signature
+        }
+
+        # TODO: Lähetä payload pörssin API-endpointtiin
+        print(f"Order signed and ready for {symbol}: {signature}")
+        return payload
