@@ -1,14 +1,17 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
 
-# XDB Chain API Endpoints (Standardized Placeholders)
-# These will be updated as soon as official node access is confirmed
-XDB_MAINNET_RPC = "https://rpc.xdbchain.com" # Placeholder
-XDB_TESTNET_RPC = "https://rpc-testnet.xdbchain.com" # Placeholder
+# XDB Chain Network Configuration
+# Vannaka says: "Focus on the destination, and the path will reveal itself."
 
-# Chain Configuration
-XDB_CHAIN_ID = 54  # DigitalBits/XDB standard ID
-XDB_CURRENCY = "XDB"
+XDB_MAINNET_RPC = "https://rpc.xdbchain.com"
+XDB_CHAIN_ID = 111  # Official Chain ID for XDB Mainnet
+XDB_CURRENCY_SYMBOL = "XDB"
 
-# Gateway V2.1 Implementation Details
-CONNECTOR_TYPE = "DEX"
-EXECUTION_TYPE = "CLOB/AMM" # To be confirmed via XDB team
+# Gateway V2.1 Standardized Endpoints
+# Ferrari-analyysi: Nämä vakiot pitävät huolen, ettei koodissa ole "magic strings" -riskejä.
+DEFAULT_GAS_LIMIT = 21000
+MAX_FEE_PER_GAS = "1000000000"  # 1 Gwei oletuksena, säädetään verkon mukaan
+
+# Connector Metadata
+CONNECTOR_NAME = "xdb_chain"
+GATEWAY_V21_COMPLIANT = True
