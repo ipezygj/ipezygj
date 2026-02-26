@@ -1,43 +1,30 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
+from typing import Dict, Final, List
 
-from typing import Dict, Final
-
-# ====================================================================================================
-# NETWORK ARCHITECTURE & OPTIMIZATION
-# ====================================================================================================
+# --- Core Networking ---
 NETWORK_TIMEOUT_GLOBAL: Final[float] = 3.0
 NETWORK_TIMEOUT_CRITICAL: Final[float] = 5.0
+ADAPTIVE_JITTER_MS: Final[tuple] = (20, 450)
 
-# Connection Pooling: Keep connections warm for faster execution
-MAX_CONNECTIONS: Final[int] = 100
-MAX_KEEP_ALIVE_CONNECTIONS: Final[int] = 20
+# --- Circuit Breaker Config ---
+FAILURE_THRESHOLD: Final[int] = 3
+COOLDOWN_PERIOD: Final[int] = 60
 
-# Adaptive Jitter: Random delay (ms) to bypass bot detection
-ADAPTIVE_JITTER_MS: Final[tuple] = (10, 500)
+# --- Expanded Stealth Identities ---
+STEALTH_USER_AGENTS: Final[List[str]] = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0"
+]
+STEALTH_LANGUAGES: Final[List[str]] = ["en-US,en;q=0.9", "fi-FI,fi;q=0.8,en-US;q=0.7", "en-GB,en;q=0.9"]
 
-# ====================================================================================================
-# EXCHANGE ENDPOINT REGISTRY
-# ====================================================================================================
-XDB_HORIZON_NODES: Final[Dict[str, str]] = {
-    "MAINNET": "https://horizon.stellar.org",
-    "TESTNET": "https://horizon-testnet.stellar.org",
-}
-
+# --- Endpoints ---
 ALPHA_EXCHANGE_PAYLOAD: Final[Dict[str, str]] = {
     "BINANCE": "https://api.binance.com/api/v3/ping",
     "BITGET": "https://api.bitget.com/api/v2/public/time",
     "BYBIT": "https://api.bybit.com/v5/market/time",
-    "DYDX_V4": "https://indexer.dydx.trade/v4/time",
     "GATE_IO": "https://api.gateio.ws/api/v4/spot/time",
     "HYPERLIQUID": "https://api.hyperliquid.xyz/info",
-    "INJECTIVE": "https://sentry.lcd.injective.network/api/v1/ping",
     "KRAKEN": "https://api.kraken.com/0/public/Time",
-    "KUCOIN": "https://api.kucoin.com/api/v1/timestamp",
     "OKX": "https://www.okx.com/api/v5/public/time",
-    "VERTEX": "https://prod.vertexprotocol-backend.com/v1/time",
-}
-
-STEALTH_HEADERS: Final[Dict[str, str]] = {
-    "User-Agent": "Mozilla/5.0 (V2.1 Gateway Node; Institutional Grade) AppleWebKit/537.36",
-    "Accept": "application/json",
 }

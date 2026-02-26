@@ -1,18 +1,8 @@
-name: CI-CD Pipeline V2.1
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+name: testit
+on: [push]
 jobs:
-  compliance-check:
+  tsekkaus:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - name: Run Security Audit
-      run: python security_guard.py
+    - run: python security_guard.py
