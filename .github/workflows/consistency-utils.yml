@@ -29,4 +29,4 @@ jobs:
           echo "Verifying critical modules..."
           [ -f connectors/hyperliquid/auth.py ] && echo "Hyperliquid Auth: Verified"
           [ -f connectors/xdb/constants.py ] && echo "XDB Constants: Verified"
-          [ -f connectors/xdb/derivative.py ] && echo "XDB Derivative: Verified"
+          [ -f connectors/xdb/derivative.py ] && echo "XDB Derivative: Verified"        
