@@ -1,86 +1,64 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
-
 import asyncio
 import time
-import os
 import httpx
-from termcolor import colored
 import urllib3
-# Ferrari-analyysi: Tuodaan uusi XDB-natiivi Auth
+from termcolor import colored
 from stellar_sdk import Keypair
 
-# --- KONFIGURAATIO ---
-XDB_HORIZON = "https://horizon.livenet.xdbchain.com/"
-HYPERLIQUID_API = "https://api.hyperliquid.xyz/info"
-UPDATE_INTERVAL = 3.0
+from constants import ALPHA_EXCHANGE_PAYLOAD, STEALTH_HEADERS, NETWORK_TIMEOUT_GLOBAL
+
+try:
+    PUB_KEY = Keypair.random().public_key
+except:
+    PUB_KEY = "GAQQGFSLILQCPSAVP4B6SKT6XBQDXQZFGZJFNTB46ZJ3Z77QJIFKSBBJ"
 
 class StealthEngine:
     def __init__(self):
-        self.url_xdb = XDB_HORIZON
-        self.url_hl = HYPERLIQUID_API
-        self.xdb_status = "OFFLINE"
-        self.xdb_latency = "N/A"
-        self.hl_status = "OFFLINE"
-        self.hl_latency = "N/A"
-        
-        # Luodaan XDB-natiivi avainpari monitorointia varten
-        # Huom: Tämä luo uuden osoitteen joka kerta, kunnes tallennamme seedin
-        self.kp = Keypair.random()
-        self.xdb_address = self.kp.public_key
+        self.results = {name: "PENDING" for name in ALPHA_EXCHANGE_PAYLOAD}
 
-    async def check_xdb(self):
+    async def fetch_latency(self, client, name, url):
+        start = time.time()
         try:
-            start = time.time()
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(self.url_xdb)
-            if resp.status_code == 200:
-                self.xdb_latency = f"{int((time.time() - start) * 1000)}ms"
-                self.xdb_status = "ONLINE"
-                return True
-            return False
+            await client.get(url, headers=STEALTH_HEADERS, timeout=NETWORK_TIMEOUT_GLOBAL)
+            self.results[name] = f"{int((time.time() - start) * 1000)}ms"
         except Exception:
-            self.xdb_status = "OFFLINE"
-            return False
+            self.results[name] = "ERR/TMO"
 
-    async def check_hl(self):
-        try:
-            start = time.time()
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.post(self.url_hl, json={"type": "meta"})
-            if resp.status_code == 200:
-                self.hl_latency = f"{int((time.time() - start) * 1000)}ms"
-                self.hl_status = "ONLINE"
-                return True
-            return False
-        except Exception:
-            self.hl_status = "OFFLINE"
-            return False
+    async def check_all(self):
+        async with httpx.AsyncClient() as client:
+            tasks = [self.fetch_latency(client, name, url) for name, url in ALPHA_EXCHANGE_PAYLOAD.items()]
+            await asyncio.gather(*tasks)
 
     def render(self):
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print(colored("🏎️  STEALTH MASTER DASHBOARD V2.1 [XDB NATIVE] 🏎️", "yellow", attrs=["bold"]))
-        print(colored("="*70, "grey"))
-        
-        hl_color = "green" if self.hl_status == "ONLINE" else "red"
-        print(f"{'HYPERLIQUID'.ljust(15)} | STATUS: {colored(self.hl_status.ljust(8), hl_color)} | LATENCY: {str(self.hl_latency).rjust(8)}")
-        
-        xdb_color = "green" if self.xdb_status == "ONLINE" else "red"
-        print(f"{'XDB CHAIN'.ljust(15)} | STATUS: {colored(self.xdb_status.ljust(8), xdb_color)} | LATENCY: {str(self.xdb_latency).rjust(8)}")
-        
-        print(colored("="*70, "grey"))
-        print(colored(f"XDB Wallet (Native G-Addr): {self.xdb_address}", "cyan"))
-        print(colored(f"Päivitetty: {time.strftime('%H:%M:%S')}", "grey"))
+        print("\033[H\033[J", end="")
+        print(colored("STEALTH MASTER DASHBOARD V2.1 [MODULAR ARCHITECTURE] 🏎️", "cyan", attrs=["bold"]))
+        print("======================================================================")
+        names = sorted(list(ALPHA_EXCHANGE_PAYLOAD.keys()))
+        for i in range(0, len(names), 2):
+            n1 = names[i]
+            r1 = self.results[n1]
+            str1 = f"{n1:12} | LATENCY: {r1:7}"
+            if i+1 < len(names):
+                n2 = names[i+1]
+                r2 = self.results[n2]
+                str2 = f"{n2:12} | LATENCY: {r2:7}"
+            else:
+                str2 = ""
+            print(colored(f"{str1:34} {str2}", "green" if "ms" in r1 else "yellow"))
+        print("======================================================================")
+        print(colored(f"XDB Wallet: {PUB_KEY}", "cyan"))
+        print(colored(f"Updated: {time.strftime('%H:%M:%S')} | Press Ctrl+C to stop", "grey"))
 
     async def loop(self):
         while True:
-            await asyncio.gather(self.check_xdb(), self.check_hl())
+            await self.check_all()
             self.render()
-            await asyncio.sleep(UPDATE_INTERVAL)
+            await asyncio.sleep(5)
 
 if __name__ == "__main__":
     urllib3.disable_warnings()
-    engine = StealthEngine()
     try:
-        asyncio.run(engine.loop())
+        asyncio.run(StealthEngine().loop())
     except KeyboardInterrupt:
-        print("\nSammutettu.")
+        pass
