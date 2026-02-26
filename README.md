@@ -5,7 +5,7 @@
 ## 🛠️ Supported Connectors (V2.1 Standardized)
 | Exchange | Status | Features |
 | :--- | :--- | :--- |
-| **Hyperliquid** | `v1.3.0 PRE` | EIP-712 Signing, L1 CLOB Support |
+| **Hyperliquid** | `v1.3.1 PRE` | EIP-712 Signing, L1 CLOB Support |
 | **Vertex** | `v1.2.0 FINAL` | High-frequency Market Making |
 | **9inch** | `v1.2.0 FINAL` | PulseChain LP Optimization |
 | **PulseX** | `v1.1.0 FINAL` | Standardized V2.1 DEX logic |
@@ -17,4 +17,4 @@
 - **Security First:** Hardcoded safety for API endpoints and auth logic.
 
 ## 📦 Recent Releases
-Check the [Latest Release (v1.3.0)](https://github.com/ipezygj/ipezygj/releases) for the Hyperliquid integration.
+Check the [Latest Release (v1.3.1)](https://github.com/ipezygj/ipezygj/releases) for the Hyperliquid integration.
