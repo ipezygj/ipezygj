@@ -9,7 +9,7 @@
 | **Vertex** | `v1.2.0 FINAL` | High-frequency Market Making |
 | **9inch** | `v1.2.0 FINAL` | PulseChain LP Optimization |
 | **PulseX** | `v1.1.0 FINAL` | Standardized V2.1 DEX logic |
-| *XDB Chain* |IN DEVELOPMENT | V2.1 Infrastructure, RPC Integration |
+| *XDB Chain* | `IN DEVELOPMENT` | V2.1 Infrastructure, RPC Integration |
 
 ## 🚀 Key Features
 - **Gateway V2.1 Modular Architecture:** Strict adherence to Hummingbot standards.
