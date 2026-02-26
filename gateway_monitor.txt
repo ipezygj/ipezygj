@@ -1,0 +1,35 @@
+""" Technical implementation for Hummingbot Gateway V2.1. """
+
+import os
+import sys
+
+# --- UUSI FEAT: Integrity Guard ---
+def check_infrastructure_integrity():
+    """ 
+    Ferrari-analyysi: Tarkistaa projektin rakenteen ennen käynnistystä. 
+    Vannaka sanoo: "Miekka on tarkistettava ennen taistelua."
+    """
+    required_paths = [
+        "connectors/hyperliquid/auth.py",
+        "connectors/xdb/auth.py",
+        "connectors/vertex/auth.py"
+    ]
+    
+    missing = []
+    for path in required_paths:
+        if not os.path.exists(path):
+            missing.append(path)
+            
+    if missing:
+        print(colored("⚠️  INTEGRITY ERROR: Missing critical modules:", "red"))
+        for m in missing:
+            print(f" - {m}")
+        #sys.exit(1) # Poista kommentti, jos haluat estää ajon virheen sattuessa
+        return False
+    return True
+
+# --- Lisää kutsu main-funktioon ---
+async def main():
+    check_infrastructure_integrity() # Suoritetaan tarkistus ensin
+    db = MasterDashboard()
+    await db.update_loop()
