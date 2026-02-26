@@ -11,9 +11,9 @@ class GatewayConnector:
         self.url = ALPHA_EXCHANGE_PAYLOAD.get(self.name)
         self.viimeisin_viive = 0
 
-    async def hae(self, client: httpx.AsyncClient):
-        # Pidetään matalaa profiilia
-        await asyncio.sleep(random.randint(*ADAPTIVE_JITTER_MS) / 1000.0)
+    async def hae(self, client: httpx.AsyncClient, porrastus: float):
+        # 16. Turbo: Porrastettu lähtöruutu + satunnainen jitter
+        await asyncio.sleep(porrastus + (random.randint(*ADAPTIVE_JITTER_MS) / 1000.0))
         
         headers = {"User-Agent": random.choice(STEALTH_USER_AGENTS)}
         alku = time.time()
@@ -26,31 +26,40 @@ class GatewayConnector:
             return False
 
 async def aja():
-    print("Värkätään... seurataan tilannetta tila.txt tiedostosta.")
+    print("Turbo 16 aktivoitu... Porrastettu haku käynnissä.")
     koneet = [GatewayConnector(ex) for ex in ALPHA_EXCHANGE_PAYLOAD.keys()]
     
+    # Lasketaan pieni porrastusväli (esim. 0.1s välein per pörssi)
+    stagger_step = 0.1 
+
     while True:
         try:
-            # Luodaan yhteyspankki tässä, jotta se pysyy tuoreena
             limits = httpx.Limits(max_connections=50, max_keepalive_connections=10)
             async with httpx.AsyncClient(limits=limits) as client:
-                for _ in range(100): # Tehdään sata kierrosta kerrallaan
-                    await asyncio.gather(*[k.hae(client) for k in koneet])
+                for _ in range(50):
+                    # Lähetetään haut porrastetusti
+                    tasks = []
+                    for i, k in enumerate(koneet):
+                        tasks.append(k.hae(client, i * stagger_step))
+                    
+                    await asyncio.gather(*tasks)
                     
                     with open("tila.txt", "w") as f:
-                        f.write(f"Päivitetty: {time.strftime('%H:%M:%S')}\n")
-                        for k in koneet:
+                        f.write(f"Päivitetty: {time.strftime('%H:%M:%S')} | Turbo 16: Active\n")
+                        f.write("-" * 40 + "\n")
+                        # Järjestetään nopeuden mukaan, niin nähdään kuka johtaa
+                        aktiiviset = sorted(koneet, key=lambda x: (x.viimeisin_viive <= 0, x.viimeisin_viive))
+                        for k in aktiiviset:
                             status = f"{k.viimeisin_viive}ms" if k.viimeisin_viive > 0 else "---"
-                            f.write(f"{k.name:12}: {status}\n")
+                            f.write(f"{k.name:15}: {status}\n")
                     
-                    await asyncio.sleep(8) # Rauhallinen tahti
+                    await asyncio.sleep(5) # Hieman tiheämpi tahti, kun on tehoja
         except Exception:
-            # Jos tulee jokin isompi solmu, levätään hetki ja yritetään uusiksi
-            await asyncio.sleep(30)
+            await asyncio.sleep(10)
             continue
 
 if __name__ == "__main__":
     try:
         asyncio.run(aja())
     except KeyboardInterrupt:
-        print("\nLopetettu tältä erää.")
+        print("\nVarikko lukittu.")
