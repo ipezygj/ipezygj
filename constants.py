@@ -3,12 +3,21 @@
 from typing import Dict, Final
 
 # ====================================================================================================
-# GATEWAY V2.1 NETWORK CONSTANTS & DATA PAYLOADS
+# NETWORK ARCHITECTURE & OPTIMIZATION
 # ====================================================================================================
-
 NETWORK_TIMEOUT_GLOBAL: Final[float] = 3.0
 NETWORK_TIMEOUT_CRITICAL: Final[float] = 5.0
 
+# Connection Pooling: Keep connections warm for faster execution
+MAX_CONNECTIONS: Final[int] = 100
+MAX_KEEP_ALIVE_CONNECTIONS: Final[int] = 20
+
+# Adaptive Jitter: Random delay (ms) to bypass bot detection
+ADAPTIVE_JITTER_MS: Final[tuple] = (10, 500)
+
+# ====================================================================================================
+# EXCHANGE ENDPOINT REGISTRY
+# ====================================================================================================
 XDB_HORIZON_NODES: Final[Dict[str, str]] = {
     "MAINNET": "https://horizon.stellar.org",
     "TESTNET": "https://horizon-testnet.stellar.org",
