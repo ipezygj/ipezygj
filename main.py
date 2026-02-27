@@ -1,7 +1,10 @@
-""" Technical implementation for Ferrari Stealth Syndicate V3.3 - Bypass Mode. """
+""" Technical implementation for Ferrari Stealth Syndicate V3.5 - Deep Space Stealth. """
 import asyncio
-from strategy import run_alpha_strategy
+
 from cosmic_foundry import fetch_cosmic_data
+from deep_space_radar import run_deep_space_radar
+from strategy import run_alpha_strategy
+
 
 async def run_cosmic_loop():
     try:
@@ -13,19 +16,18 @@ async def run_cosmic_loop():
 
 async def safe_alpha_strategy():
     try:
-        print("🔧 [SYSTEM] Sytytysvirta kytketty Alpha-moottoriin! Käsijarru on irti!")
         await run_alpha_strategy()
     except Exception as e:
         print(f"🔥 [CRITICAL] Alpha Engine kaatui: {e}")
 
 async def main():
-    print("💎 FERRARI STEALTH SYNDICATE V3.3: BYPASS MODE")
-    print("🏎️  Paja käynnistyy: API-palvelin ohitettu diagnostiikan ajaksi...")
+    print("💎 FERRARI STEALTH SYNDICATE V3.5: DEEP SPACE STEALTH EDITION")
+    print("🏎️  Paja käynnistyy: Alpha, Cosmic News & <100m NEO Mapper active...")
     
-    # KÄYNNISTETÄÄN VAIN ALPHA JA NASA (Ei API-serveriä!)
     await asyncio.gather(
         safe_alpha_strategy(),
-        run_cosmic_loop()
+        run_cosmic_loop(),
+        run_deep_space_radar() # ☄️ AITO NASA JPL <100m TELEMETRIA KYTKETTY!
     )
 
 if __name__ == "__main__":
