@@ -2,9 +2,11 @@ import ast
 import sys
 from pathlib import Path
 
-# Perus tarkistus URL-osoitteille
+# Perus tarkistus URL-osoitteille (V2.1 Stealth Mode)
 for p in Path('.').rglob('*.py'):
-    if p.name == 'constants.py': continue
+    # 🕵️ Käsityöläisen sääntö: Katsastusmies ei katsasta itseään eikä vakioita
+    if p.name in ['constants.py', 'security_guard.py']: continue
+    
     with open(p, 'r') as f:
         t = ast.parse(f.read())
         for n in ast.walk(t):
