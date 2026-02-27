@@ -9,15 +9,25 @@ if not os.path.exists(db_path):
 conn = sqlite3.connect(db_path)
 c = conn.cursor()
 
-c.execute("SELECT COUNT(*), MIN(price), MAX(price), AVG(price) FROM prices")
-count, min_p, max_p, avg_p = c.fetchone()
+print("\n--- 🏎️ V12 MULTI-ASSET TELEMETRY REPORT ---")
 
-print("--- 🏎️ FERRARI TELEMETRY REPORT ---")
-print(f"📊 Samples collected: {count}")
-if count > 0:
-    print(f"📈 Max Price: ${max_p:.2f}")
-    print(f"📉 Min Price: ${min_p:.2f}")
-    print(f"⚖️ Average:   ${avg_p:.2f}")
-    print(f"⚡ Volatility: ${max_p - min_p:.2f}")
-print("----------------------------------")
+c.execute("""
+    SELECT pair, COUNT(*), MIN(price), MAX(price), AVG(price) 
+    FROM prices 
+    GROUP BY pair
+    ORDER BY pair
+""")
+
+rows = c.fetchall()
+if not rows:
+    print("📊 No data collected yet.")
+else:
+    for row in rows:
+        pair, count, min_p, max_p, avg_p = row
+        volatility = max_p - min_p
+        print(f"🔹 {pair} | Samples: {count}")
+        print(f"   📈 Max: ${max_p:,.2f} | 📉 Min: ${min_p:,.2f}")
+        print(f"   ⚖️ Avg: ${avg_p:,.2f} | ⚡ Vol: ${volatility:,.2f}")
+        print("-" * 35)
+
 conn.close()
