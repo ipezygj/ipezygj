@@ -3,17 +3,20 @@ import httpx
 from auth import TELEGRAM_TOKEN, ALPHA_CHAT_ID, COSMIC_CHAT_ID, VIP_CHAT_ID
 
 async def send_alpha_alert(message: str, channel: str = "alpha") -> bool:
-    """ Routes payloads to specific Telegram channels based on source engine. """
+    """ Routes payloads to specific Telegram channels. """
     
-    # Valitaan oikea putki
-    if channel == "vip":
-        chat_id = VIP_CHAT_ID
-    elif channel == "cosmic":
-        chat_id = COSMIC_CHAT_ID
-    else:
-        chat_id = ALPHA_CHAT_ID
+    # Valitaan ID muuttujasta, ei kovakoodattuna
+    target_map = {
+        "vip": VIP_CHAT_ID,
+        "cosmic": COSMIC_CHAT_ID,
+        "alpha": ALPHA_CHAT_ID
+    }
+    chat_id = target_map.get(channel, ALPHA_CHAT_ID)
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    # Rakennetaan URL dynaamisesti
+    base_url = "https://api.telegram.org"
+    send_url = f"{base_url}/bot{TELEGRAM_TOKEN}/sendMessage"
+    
     payload = {
         "chat_id": chat_id,
         "text": message,
@@ -22,8 +25,8 @@ async def send_alpha_alert(message: str, channel: str = "alpha") -> bool:
 
     async with httpx.AsyncClient() as client:
         try:
-            r = await client.post(url, json=payload, timeout=10.0)
+            r = await client.post(send_url, json=payload, timeout=10.0)
             return r.status_code == 200
         except Exception as e:
-            print(f"❌ [TELEGRAM] Transmission failed: {e}")
+            print(f"❌ [TELEGRAM] Transmission failed")
             return False
