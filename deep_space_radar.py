@@ -1,19 +1,16 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
 import asyncio
 import datetime
-
 import httpx
-
 from auth import NASA_API_KEY
 from telegram_bot import send_alpha_alert
-
 
 class StealthNEOMapper:
     """ Maps NEOs and routes data. Includes memory to prevent spam. """
     def __init__(self, stealth_diameter_m: float = 100.0, stealth_distance_ld: float = 10.0):
         self.stealth_diameter = stealth_diameter_m
         self.stealth_distance_ld = stealth_distance_ld
-        self.alerted_targets = set() # 🧠 KÄSITYÖLÄISEN MUISTIPIIRI
+        self.alerted_targets = set() 
 
     async def scan_sector(self):
         today = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -21,7 +18,7 @@ class StealthNEOMapper:
         
         async with httpx.AsyncClient() as client:
             try:
-                print("🛰️ [RADAR] Skannataan NASA JPL -tietokantaa...")
+                print(f"🛰️ [RADAR] {datetime.datetime.now().strftime('%H:%M:%S')} - Scanning JPL with Pro Key...")
                 r = await client.get(url, timeout=15.0)
                 if r.status_code == 200:
                     data = r.json()
@@ -32,8 +29,6 @@ class StealthNEOMapper:
                     
                     for ast in asteroids:
                         name = ast.get("name")
-                        
-                        # Jos tämä kivi on jo ammuttu tänään, ohitetaan se heti!
                         if name in self.alerted_targets:
                             continue
                             
@@ -41,7 +36,6 @@ class StealthNEOMapper:
                         distance_ld = float(ast["close_approach_data"][0]["miss_distance"]["lunar"])
                         speed = float(ast["close_approach_data"][0]["relative_velocity"]["kilometers_per_second"])
                         
-                        # 💎 VIP EXCLUSIVE
                         if diameter <= self.stealth_diameter and distance_ld <= self.stealth_distance_ld and not stealth_found:
                             msg = (
                                 f"💎 *VIP EXCLUSIVE: STEALTH NEO MAPPED*\n\n"
@@ -52,11 +46,10 @@ class StealthNEOMapper:
                                 f"🔭 _Status: <100m Mapping Gap Target Logged_"
                             )
                             await send_alpha_alert(msg, channel="vip")
-                            print(f"💎 [VIP] Uusi Stealth-kohde lukittu: {name}")
-                            self.alerted_targets.add(name) # Merkataan muistiin!
+                            print(f"💎 [VIP] Success: {name} routed to Vault.")
+                            self.alerted_targets.add(name)
                             stealth_found = True
                             
-                        # ☄️ PUBLIC & VIP
                         elif diameter > 500.0 and not public_found:
                             msg_public = (
                                 f"☄️ *PUBLIC RADAR: MASSIVE NEO DETECTED*\n\n"
@@ -74,19 +67,20 @@ class StealthNEOMapper:
                                 f"🔭 _Status: Standard JPL Tracking Active_"
                             )
                             await send_alpha_alert(msg_vip, channel="vip")
-                            
-                            print(f"☄️ [ALL] Uusi iso kohde reititetty: {name}")
-                            self.alerted_targets.add(name) # Merkataan muistiin!
+                            print(f"☄️ [ALL] Success: {name} routed to both channels.")
+                            self.alerted_targets.add(name)
                             public_found = True
+                else:
+                    print(f"⚠️ [RADAR] API Warning: Status {r.status_code}")
                             
             except Exception as e:
-                print(f"❌ [RADAR] Sensorihäiriö: {e}")
+                print(f"❌ [RADAR] Sensor interference: {e}")
 
 async def run_deep_space_radar():
-    """ Jatkuva skannausluuppi. """
-    print("🛰️ [RADAR] Dual-Pipe Radar online. Memory module active (No Spam).")
+    """ Continuous scanning loop with Pro API Key cadence. """
+    print("🛰️ [RADAR] Dual-Pipe Radar online. Pro Key Active.")
     mapper = StealthNEOMapper() 
     
     while True:
         await mapper.scan_sector()
-        await asyncio.sleep(7200)
+        await asyncio.sleep(7200) # 2 tunnin syke
