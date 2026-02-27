@@ -1,7 +1,7 @@
-# Käsityöläisen liikesalaisuudet
-strategy.py
-logic.py
-*.env
-lokit.txt
-tila.txt
+# Käsityöläisen Stealth-kilpi
+auth.py
 __pycache__/
+*.pyc
+.env
+signals_output.json
+myyntidata.csv
