@@ -2,8 +2,8 @@
 
 import asyncio
 import collections
-import os
 import sqlite3
+from datetime import datetime
 
 import httpx
 
@@ -14,7 +14,6 @@ class StateManager:
         self._init_db()
 
     def _init_db(self):
-        """ V2.1 Stealth standard: Local persistent state """
         with sqlite3.connect(DB_FILE) as conn:
             c = conn.cursor()
             c.execute('''CREATE TABLE IF NOT EXISTS wallet (balance REAL)''')
@@ -72,25 +71,67 @@ class TelegramReporter:
             pass
 
 class UltimateStealthRadar:
-    def __init__(self, tg_token, tg_channels):
+    def __init__(self, tg_token, tg_channels, nasa_key):
         self.api_url = "https://api.hyperliquid.xyz/info"
         self.targets = ["HYPE", "BTC", "ETH", "SOL", "ARB", "TIA", "SUI"]
         self.max_trade_pct = 0.10
         self.lock = asyncio.Lock() 
         self.history = {asset: collections.deque(maxlen=15) for asset in self.targets}
         self.tg = TelegramReporter(tg_token, tg_channels)
+        self.nasa_key = nasa_key
+        self.notified_neos = set()
         
-        # Ladataan tallennettu tila tietokannasta
         self.db = StateManager()
         self.balance, self.inventory, self.buy_prices, self.max_seen_price = self.db.load_state(self.targets)
 
+    async def scan_cosmos(self):
+        """ Taustaprosessi: NASA NeoWs -rajapinnan kuuntelu. """
+        while True:
+            today = datetime.utcnow().strftime('%Y-%m-%d')
+            url = f"https://api.nasa.gov/neo/rest/v1/feed?start_date={today}&end_date={today}&api_key={self.nasa_key}"
+            
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(url, timeout=10.0)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        neos = data.get("near_earth_objects", {}).get(today, [])
+                        
+                        for neo in neos:
+                            neo_id = neo.get("id")
+                            if neo_id in self.notified_neos:
+                                continue
+                                
+                            self.notified_neos.add(neo_id)
+                            name = neo.get("name", "Unknown")
+                            dia_max = neo.get("estimated_diameter", {}).get("meters", {}).get("estimated_diameter_max", 0.0)
+                            speed = neo.get("close_approach_data", [{}])[0].get("relative_velocity", {}).get("kilometers_per_second", "0")
+                            
+                            dia_fmt = round(dia_max, 1)
+                            speed_fmt = round(float(speed), 1)
+                            
+                            msg = f"☄️ *ASTEROID DETECTED: {name}*\nDiameter: {dia_fmt}m\nSpeed: {speed_fmt} km/s"
+                            
+                            if dia_max >= 100.0:
+                                asyncio.create_task(self.tg.route_signal("NASA", msg))
+                                asyncio.create_task(self.tg.route_signal("VIP", msg))
+                            else:
+                                asyncio.create_task(self.tg.route_signal("VIP", f"💫 *VIP EXCLUSIVE (<100m)*\n{msg}"))
+                                
+            except Exception as e:
+                print(f"⚠️ Cosmos Scan Error: {e}")
+            
+            await asyncio.sleep(3600)  # Skannaus kerran tunnissa
+
     async def run(self):
-        print(f"🏎️  V2.1 SIGNAL FOUNDRY STARTING - DB LOADED")
-        print(f"💰 Resuming with Balance: {round(self.balance, 2)} USDC")
+        print(f"🏎️  V2.1 SIGNAL FOUNDRY STARTING - DB & COSMOS LOADED")
         
-        await self.tg.route_signal("NASA", "🛰️ *Cosmic Interface*\nSystem Check: OK. Odotetaan dataa taivaankappaleista (>100m).")
-        await self.tg.route_signal("VIP", "💎 *Cosmic Interface VIP*\nSystem Check: OK. Odotetaan dataa pienistä komeetoista (<100m).")
-        await self.tg.route_signal("SIGNAL", f"🟢 *The Signal Foundry Elite*\nSystem Check: OK. Tila ladattu (Kassa: {round(self.balance, 2)} USDC).")
+        await self.tg.route_signal("NASA", "🛰️ *Cosmic Interface*\nSystem Check: OK. NASA-skanneri aktivoitu.")
+        await self.tg.route_signal("VIP", "💎 *Cosmic Interface VIP*\nSystem Check: OK. VIP-skanneri aktivoitu.")
+        await self.tg.route_signal("SIGNAL", f"🟢 *The Signal Foundry Elite*\nSystem Check: OK. Tila ladattu ({round(self.balance, 2)} USDC).")
+
+        # Käynnistetään taustaprosessi avaruusdatalle
+        asyncio.create_task(self.scan_cosmos())
 
         async with httpx.AsyncClient(limits=httpx.Limits(max_connections=10)) as client:
             while True:
@@ -110,7 +151,6 @@ class UltimateStealthRadar:
                     avg = sum(self.history[asset]) / len(self.history[asset])
                     
                     async with self.lock:
-                        # --- ENTRY ---
                         if self.inventory[asset] == 0 and price < (avg * 0.9992):
                             val = self.balance * self.max_trade_pct
                             if self.balance >= val:
@@ -119,18 +159,15 @@ class UltimateStealthRadar:
                                 self.buy_prices[asset] = price
                                 self.max_seen_price[asset] = price
                                 
-                                # Tallennetaan osto tietokantaan
                                 self.db.save_state(self.balance, asset, self.inventory[asset], price, price)
                                 
                                 msg = f"✅ *ENTRY: {asset}*\nPrice: {price}\nCash: {round(self.balance, 2)} USDC"
                                 print(msg.replace('*', ''))
                                 asyncio.create_task(self.tg.route_signal("SIGNAL", msg))
 
-                        # --- EXIT ---
                         elif self.inventory[asset] > 0:
                             if price > self.max_seen_price[asset]:
                                 self.max_seen_price[asset] = price
-                                # Päivitetään huippuhinta tietokantaan
                                 self.db.save_state(self.balance, asset, self.inventory[asset], self.buy_prices[asset], price)
                             
                             p_pct = (price - self.buy_prices[asset]) / self.buy_prices[asset]
@@ -150,7 +187,6 @@ class UltimateStealthRadar:
                                 self.balance += final_val
                                 self.inventory[asset] = 0.0
                                 
-                                # Tyhjennetään positio tietokannasta ja päivitetään kassa
                                 self.db.save_state(self.balance, asset, 0.0, 0.0, 0.0)
                                 
                                 msg = f"🛑 *EXIT: {asset}*\nReason: {reason}\nNet: {round(net, 4)} USDC\nBalance: {round(self.balance, 2)}"
@@ -161,6 +197,7 @@ class UltimateStealthRadar:
 
 if __name__ == "__main__":
     TOKEN = "8747958578:AAEKbU1p0jCPt61R8Nnd3YOIjKyw8z3ana4"
+    NASA_KEY = "RWBWohy9JTrwVIbahAbqpOgA077EfOsZzPPxkw22"
     
     STEALTH_CHANNELS = {
         "VIP": "-1003817569472",      
@@ -169,6 +206,6 @@ if __name__ == "__main__":
     }
     
     try:
-        asyncio.run(UltimateStealthRadar(TOKEN, STEALTH_CHANNELS).run())
+        asyncio.run(UltimateStealthRadar(TOKEN, STEALTH_CHANNELS, NASA_KEY).run())
     except KeyboardInterrupt:
         print("\n🏁 Pit stop. Radio silence.")
