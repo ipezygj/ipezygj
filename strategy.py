@@ -1,5 +1,5 @@
 """ Technical implementation for Hummingbot Gateway V2.1 Strategy. """
-from auth import STRATEGY_NODE_URL
+from constants import STRATEGY_NODE_URL
 
 class StealthStrategy:
     """ Artisan logic. """
