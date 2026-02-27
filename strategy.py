@@ -2,19 +2,12 @@
 from auth import STRATEGY_NODE_URL
 
 class StealthStrategy:
-    """ Artisan trading logic with pure stealth routing. """
+    """ Artisan logic. """
     def __init__(self):
-        self.active_status = True
-        self.node_connection = STRATEGY_NODE_URL
+        self.route = STRATEGY_NODE_URL
 
-    async def execute_trade(self, payload: dict):
-        """ Executes trade on the stealth node. """
-        # Reititys hoidetaan täysin auth.py:n kautta
-        target_node = self.node_connection
-        
-        # Rivi 17 on nyt puhdasta, steriiliä kaupankäyntilogiikkaa
-        execution_status = "dispatched"
-        return {"status": execution_status, "node": "secured"}
+    async def execute_trade(self, data: dict):
+        return 1
 
 if __name__ == "__main__":
-    print("💎 Stealth Strategy: Loaded and ready for Hyperliquid.")
+    pass
