@@ -1,211 +1,63 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
-
 import asyncio
-import collections
 import sqlite3
+import os
+import httpx
 from datetime import datetime
 
-import httpx
+# Stealth configuration
+LOG_FILE = os.path.expanduser('~/my_ferrari/strategy.log')
+DB_FILE = os.path.expanduser('~/my_ferrari/strategy.db')
+PYTH_ETH_USD_ID = "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
+PYTH_URL = f"https://hermes.pyth.network/v2/updates/price/latest?ids[]={PYTH_ETH_USD_ID}"
 
-DB_FILE = "stealth_state.db"
-
-class StateManager:
-    def __init__(self):
-        self._init_db()
-
-    def _init_db(self):
-        with sqlite3.connect(DB_FILE) as conn:
-            c = conn.cursor()
-            c.execute('''CREATE TABLE IF NOT EXISTS wallet (balance REAL)''')
-            c.execute('''CREATE TABLE IF NOT EXISTS inventory 
-                         (asset TEXT PRIMARY KEY, amount REAL, buy_price REAL, max_seen_price REAL)''')
-            
-            c.execute('SELECT balance FROM wallet')
-            if not c.fetchone():
-                c.execute('INSERT INTO wallet VALUES (1000.0)')
-            conn.commit()
-
-    def load_state(self, targets):
-        with sqlite3.connect(DB_FILE) as conn:
-            c = conn.cursor()
-            c.execute('SELECT balance FROM wallet')
-            balance = c.fetchone()[0]
-            
-            inventory = {asset: 0.0 for asset in targets}
-            buy_prices = {asset: 0.0 for asset in targets}
-            max_seen = {asset: 0.0 for asset in targets}
-            
-            c.execute('SELECT asset, amount, buy_price, max_seen_price FROM inventory')
-            for row in c.fetchall():
-                if row[0] in targets:
-                    inventory[row[0]] = row[1]
-                    buy_prices[row[0]] = row[2]
-                    max_seen[row[0]] = row[3]
-                    
-            return balance, inventory, buy_prices, max_seen
-
-    def save_state(self, balance, asset, amount, buy_price, max_seen):
-        with sqlite3.connect(DB_FILE) as conn:
-            c = conn.cursor()
-            c.execute('UPDATE wallet SET balance = ?', (balance,))
-            c.execute('''INSERT OR REPLACE INTO inventory (asset, amount, buy_price, max_seen_price) 
-                         VALUES (?, ?, ?, ?)''', (asset, amount, buy_price, max_seen))
-            conn.commit()
-
-class TelegramReporter:
-    def __init__(self, token, channels):
-        self.url = f"https://api.telegram.org/bot{token}/sendMessage"
-        self.channels = channels
-
-    async def route_signal(self, target_channel, message):
-        """ Reitittää viestin. V2.1 Stealth standard. """
-        chat_id = self.channels.get(target_channel)
-        if not chat_id:
-            return  
-
-        payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
-        try:
-            async with httpx.AsyncClient() as client:
-                await client.post(self.url, json=payload, timeout=5.0)
-        except Exception:
-            pass
-
-class UltimateStealthRadar:
-    def __init__(self, tg_token, tg_channels, nasa_key):
-        self.api_url = "https://api.hyperliquid.xyz/info"
-        self.targets = ["HYPE", "BTC", "ETH", "SOL", "ARB", "TIA", "SUI"]
-        self.max_trade_pct = 0.10
-        self.lock = asyncio.Lock() 
-        self.history = {asset: collections.deque(maxlen=15) for asset in self.targets}
-        self.tg = TelegramReporter(tg_token, tg_channels)
-        self.nasa_key = nasa_key
-        self.notified_neos = set()
+async def fetch_pyth_price(client):
+    try:
+        response = await client.get(PYTH_URL, timeout=10.0)
+        response.raise_for_status()
+        data = response.json()
         
-        self.db = StateManager()
-        self.balance, self.inventory, self.buy_prices, self.max_seen_price = self.db.load_state(self.targets)
+        # Pyth palauttaa hinnan ja eksponentin
+        price_data = data['parsed'][0]['price']
+        price = int(price_data['price'])
+        expo = int(price_data['expo'])
+        
+        # Lasketaan todellinen hinta (esim. hinta * 10^-8)
+        actual_price = price * (10 ** expo)
+        return actual_price
+    except Exception as e:
+        print(f"⚠️ Pyth Fetch Error: {e}")
+        return None
 
-    async def scan_cosmos(self):
-        """ Taustaprosessi: NASA NeoWs -rajapinnan kuuntelu. """
+def save_to_db(price):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("INSERT INTO prices (pair, price) VALUES (?, ?)", ('ETH/USD', price))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"❌ DB Error: {e}")
+
+async def track_market():
+    print("🏎️ THE SIGNAL FOUNDRY ELITE - LIVE MARKET ACTIVE")
+    
+    async with httpx.AsyncClient() as client:
         while True:
-            today = datetime.utcnow().strftime('%Y-%m-%d')
-            url = f"https://api.nasa.gov/neo/rest/v1/feed?start_date={today}&end_date={today}&api_key={self.nasa_key}"
+            price = await fetch_pyth_price(client)
+            ts = datetime.now().isoformat()
             
-            try:
-                async with httpx.AsyncClient() as client:
-                    resp = await client.get(url, timeout=10.0)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        neos = data.get("near_earth_objects", {}).get(today, [])
-                        
-                        for neo in neos:
-                            neo_id = neo.get("id")
-                            if neo_id in self.notified_neos:
-                                continue
-                                
-                            self.notified_neos.add(neo_id)
-                            name = neo.get("name", "Unknown")
-                            dia_max = neo.get("estimated_diameter", {}).get("meters", {}).get("estimated_diameter_max", 0.0)
-                            speed = neo.get("close_approach_data", [{}])[0].get("relative_velocity", {}).get("kilometers_per_second", "0")
-                            
-                            dia_fmt = round(dia_max, 1)
-                            speed_fmt = round(float(speed), 1)
-                            
-                            msg = f"☄️ *ASTEROID DETECTED: {name}*\nDiameter: {dia_fmt}m\nSpeed: {speed_fmt} km/s"
-                            
-                            if dia_max >= 100.0:
-                                asyncio.create_task(self.tg.route_signal("NASA", msg))
-                                asyncio.create_task(self.tg.route_signal("VIP", msg))
-                            else:
-                                asyncio.create_task(self.tg.route_signal("VIP", f"💫 *VIP EXCLUSIVE (<100m)*\n{msg}"))
-                                
-            except Exception as e:
-                print(f"⚠️ Cosmos Scan Error: {e}")
+            if price:
+                print(f"[{ts}] 🔮 Pyth ETH/USD: ${price:.2f}")
+                save_to_db(price)
+            else:
+                print(f"[{ts}] 📉 Market intel lost, retrying next cycle...")
             
-            await asyncio.sleep(3600)  # Skannaus kerran tunnissa
-
-    async def run(self):
-        print(f"🏎️  V2.1 SIGNAL FOUNDRY STARTING - DB & COSMOS LOADED")
-        
-        await self.tg.route_signal("NASA", "🛰️ *Cosmic Interface*\nSystem Check: OK. NASA-skanneri aktivoitu.")
-        await self.tg.route_signal("VIP", "💎 *Cosmic Interface VIP*\nSystem Check: OK. VIP-skanneri aktivoitu.")
-        await self.tg.route_signal("SIGNAL", f"🟢 *The Signal Foundry Elite*\nSystem Check: OK. Tila ladattu ({round(self.balance, 2)} USDC).")
-
-        # Käynnistetään taustaprosessi avaruusdatalle
-        asyncio.create_task(self.scan_cosmos())
-
-        async with httpx.AsyncClient(limits=httpx.Limits(max_connections=10)) as client:
-            while True:
-                try:
-                    resp = await client.post(self.api_url, json={"type": "allMids"}, timeout=3.0)
-                    mids = resp.json()
-                except:
-                    await asyncio.sleep(1)
-                    continue
-
-                for asset in self.targets:
-                    if asset not in mids: continue
-                    price = float(mids[asset])
-                    self.history[asset].append(price)
-                    if len(self.history[asset]) < 10: continue
-
-                    avg = sum(self.history[asset]) / len(self.history[asset])
-                    
-                    async with self.lock:
-                        if self.inventory[asset] == 0 and price < (avg * 0.9992):
-                            val = self.balance * self.max_trade_pct
-                            if self.balance >= val:
-                                self.inventory[asset] = val / price
-                                self.balance -= val
-                                self.buy_prices[asset] = price
-                                self.max_seen_price[asset] = price
-                                
-                                self.db.save_state(self.balance, asset, self.inventory[asset], price, price)
-                                
-                                msg = f"✅ *ENTRY: {asset}*\nPrice: {price}\nCash: {round(self.balance, 2)} USDC"
-                                print(msg.replace('*', ''))
-                                asyncio.create_task(self.tg.route_signal("SIGNAL", msg))
-
-                        elif self.inventory[asset] > 0:
-                            if price > self.max_seen_price[asset]:
-                                self.max_seen_price[asset] = price
-                                self.db.save_state(self.balance, asset, self.inventory[asset], self.buy_prices[asset], price)
-                            
-                            p_pct = (price - self.buy_prices[asset]) / self.buy_prices[asset]
-                            
-                            should_sell = False
-                            reason = ""
-                            if p_pct > 0.002 and price < (self.max_seen_price[asset] * 0.9995):
-                                should_sell = True
-                                reason = "TRAILING PROFIT 💰"
-                            elif p_pct < -0.008:
-                                should_sell = True
-                                reason = "STOP LOSS 🚨"
-
-                            if should_sell:
-                                final_val = price * self.inventory[asset]
-                                net = final_val - (self.buy_prices[asset] * self.inventory[asset])
-                                self.balance += final_val
-                                self.inventory[asset] = 0.0
-                                
-                                self.db.save_state(self.balance, asset, 0.0, 0.0, 0.0)
-                                
-                                msg = f"🛑 *EXIT: {asset}*\nReason: {reason}\nNet: {round(net, 4)} USDC\nBalance: {round(self.balance, 2)}"
-                                print(msg.replace('*', ''))
-                                asyncio.create_task(self.tg.route_signal("SIGNAL", msg))
-
-                await asyncio.sleep(0.5)
+            # Odotetaan 5 minuuttia
+            await asyncio.sleep(300)
 
 if __name__ == "__main__":
-    TOKEN = "8747958578:AAEKbU1p0jCPt61R8Nnd3YOIjKyw8z3ana4"
-    NASA_KEY = "RWBWohy9JTrwVIbahAbqpOgA077EfOsZzPPxkw22"
-    
-    STEALTH_CHANNELS = {
-        "VIP": "-1003817569472",      
-        "NASA": "-1003878246491",     
-        "SIGNAL": "-1003737212742"    
-    }
-    
     try:
-        asyncio.run(UltimateStealthRadar(TOKEN, STEALTH_CHANNELS, NASA_KEY).run())
+        asyncio.run(track_market())
     except KeyboardInterrupt:
-        print("\n🏁 Pit stop. Radio silence.")
+        print("\n🏁 Ferrari returned to garage.")
