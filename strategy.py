@@ -1,4 +1,4 @@
-""" Technical implementation for Hummingbot Gateway V2.1. Quantum-Apex Edition. """
+""" Technical implementation for Hummingbot Gateway V2.1. Neural Apex Edition. """
 
 import asyncio
 import logging
@@ -9,53 +9,60 @@ from .derivative import UniversalScanner
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 logger = logging.getLogger(__name__)
 
-class QuantumPredictor:
-    """ Predicts price direction based on multi-exchange momentum. """
-    def __init__(self):
-        self.momentum = 0
-        self.last_global_avg = None
+class NeuralBrain:
+    """ Adaptive Learning Engine for Exchange Correlation. """
+    def __init__(self, exchanges):
+        self.weights = {name: 1.0 for name in exchanges}
+        self.learning_rate = 0.01
 
-    def update(self, valid_results):
-        if not valid_results: return 0
-        current_avg = sum(r['price'] for r in valid_results) / len(valid_results)
+    def update_weights(self, fastest_exchange, others):
+        """ Strengthens the weight of the leading (fastest/most accurate) exchange. """
+        for name in others:
+            # Pienennetään hitaiden tai epätarkkojen pörssien painoarvoa
+            self.weights[name] *= (1 - self.learning_rate)
+        self.weights[fastest_exchange] += self.learning_rate
         
-        if self.last_global_avg:
-            # Momentum: Positiivinen = hinta nousemassa, Negatiivinen = laskemassa
-            self.momentum = (current_avg - self.last_global_avg) / self.last_global_avg
-            
-        self.last_global_avg = current_avg
-        return self.momentum
+        # Normalisoidaan painot
+        total = sum(self.weights.values())
+        for name in self.weights:
+            self.weights[name] /= total
 
 async def main():
     scanner = UniversalScanner()
-    predictor = QuantumPredictor()
-    logger.info("🌌 QUANTUM APEX: Ennustava Ferrari on livenä.")
-    logger.info("🏎️ V12 Quantum: Momentum-tracking & Predictive Arbitrage active.")
+    brain = NeuralBrain(scanner.exchanges.keys())
+    
+    logger.info("🧠 NEURAL BRAIN ACTIVATED: Learning market lead-lag patterns.")
+    logger.info("🏎️ V12 Neural: Adaptive weighting engine online.")
 
     try:
         while True:
             results = await scanner.scan_all("ETH")
             valid = [r for r in results if r.get('status') == 200]
             
-            if valid:
-                momentum = predictor.update(valid)
+            if len(valid) >= 2:
+                # 1. Tunnistetaan nopein (Leader)
+                valid.sort(key=lambda x: float(x['latency'].replace('ms', '')))
+                leader = valid[0]
+                others = [r['exchange'] for r in valid[1:]]
                 
-                # Jos momentum on kova, lyhennetään viivettä (Hunt mode)
-                is_volatile = abs(momentum) > 0.0001
-                wait_min, wait_max = (3, 7) if is_volatile else (10, 20)
+                # 2. Päivitetään aivojen painotukset
+                brain.update_weights(leader['exchange'], others)
                 
+                # 3. Lasketaan painotettu "Neural Price"
+                neural_price = sum(r['price'] * brain.weights[r['exchange']] for r in valid)
+                
+                # 4. Etsitään poikkeama (Anomaly)
                 for r in valid:
-                    # Lasketaan "tulevaisuuden hinta" (Momentum-adjusted price)
-                    predicted_price = r['price'] * (1 + momentum)
-                    
-                    # Etsitään tilaisuus, jossa nykyhinta vs. ennustettu hinta eroaa muista
-                    if is_volatile:
-                        logger.info(f"⚡ Momentum Detected: {momentum*10000:.2f} bps | Predictive Scan active.")
+                    diff = (r['price'] - neural_price) / neural_price
+                    if abs(diff) > 0.001: # 0.1% Anomaly
+                        logger.warning(f"🎯 NEURAL ANOMALY: {r['exchange']} is out of sync by {diff*100:.3f}%")
+                        logger.warning(f"⚖️ Current Weight for {r['exchange']}: {brain.weights[r['exchange']]:.4f}")
 
-            await asyncio.sleep(random.uniform(wait_min, wait_max))
+            # Jittered wait to remain Stealth
+            await asyncio.sleep(random.uniform(10, 20))
             
     except Exception as e:
-        logger.error(f"❌ Quantum Engine Overload: {e}")
+        logger.error(f"❌ Neural Engine Error: {e}")
     finally:
         await scanner.close()
 
