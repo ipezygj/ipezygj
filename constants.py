@@ -33,3 +33,19 @@ KRAKEN_WSS = "wss://ws.kraken.com"
 # MEXC Endpoints
 MEXC_REST = "https://api.mexc.com"
 MEXC_WSS = "wss://wbs.mexc.com/ws"
+
+# Gate.io Endpoints
+GATE_IO_REST = "https://api.gateio.ws/api/v4"
+GATE_IO_WSS = "wss://api.gateio.ws/ws/v4/"
+
+# AscendEx Endpoints
+ASCEND_EX_REST = "https://ascendex.com/api/pro/v1"
+ASCEND_EX_WSS = "wss://ascendex.com/0/api/pro/v1/stream"
+
+# Phemex Endpoints
+PHEMEX_REST = "https://api.phemex.com"
+PHEMEX_WSS = "wss://phemex.com/ws"
+
+# Huobi (HTX) Endpoints
+HUOBI_REST = "https://api.huobi.pro"
+HUOBI_WSS = "wss://api.huobi.pro/ws"
