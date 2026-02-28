@@ -3,42 +3,48 @@
 import asyncio
 import logging
 import random
-import time
 from .derivative import UniversalScanner
 
-# Setup logging
+# Setup logging - Stealth & Clean
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 async def main():
     scanner = UniversalScanner()
-    logger.info("🧙‍♂️ Gandalf Sauce Activated: Volatility-based Stealth enabled.")
+    logger.info("🧙‍♂️ Gandalf 'Hedge-Arbi' Mode: Online.")
+    logger.info("🏎️ Tracking Basis (Spot vs Perp) & Cross-Exchange gaps...")
 
-    last_price = None
-    
     try:
         while True:
             results = await scanner.scan_all("ETH")
-            valid = [r for r in results if r.get('status') == 200 and 'price' in r]
+            valid = [r for r in results if r.get('status') == 200]
             
-            if valid:
-                current_price = valid[0]['price']
+            if len(valid) >= 2:
+                # Erotellaan Spot ja Perp
+                spots = [r for r in valid if r['type'] == 'SPOT']
+                perps = [r for r in valid if r['type'] == 'PERP']
                 
-                # Lasketaan "markkinan hermostuneisuus"
-                volatility = abs(current_price - last_price) if last_price else 0
-                last_price = current_price
-                
-                # Dynaaminen viive: jos volatiteetti kasvaa, botti nopeutuu
-                # Mutta pidetään aina vähintään 5s väli (Safety First)
-                base_wait = 45 if volatility < 0.5 else 10
-                wait_time = random.uniform(base_wait * 0.8, base_wait * 1.2)
-                
-                logger.info(f"📈 Price: {current_price} | Vol: {volatility:.2f} | Next scan in {wait_time:.1f}s")
-            
+                # 1. Cross-Exchange Spot Arbi
+                if len(spots) >= 2:
+                    s_prices = [r['price'] for r in spots]
+                    gap = (max(s_prices) - min(s_prices)) / min(s_prices) * 100
+                    if gap > 0.05:
+                        logger.warning(f"🚨 SPOT ARBI: {gap:.3f}% gap detected between spot exchanges!")
+
+                # 2. Hedge-Arbi (Basis: Spot vs Perp)
+                for s in spots:
+                    for p in perps:
+                        basis = (p['price'] - s['price']) / s['price'] * 100
+                        if abs(basis) > 0.03:
+                            direction = "CONTANGO (Perp > Spot)" if basis > 0 else "BACKWARDATION (Spot > Perp)"
+                            logger.info(f"📊 BASIS [{s['exchange']} vs {p['exchange']}]: {basis:.3f}% | {direction}")
+
+            # Stealth cooling with dynamic jitter
+            wait_time = random.uniform(15, 30)
             await asyncio.sleep(wait_time)
             
     except Exception as e:
-        logger.error(f"❌ Critical: {e}")
+        logger.error(f"❌ Critical failure in Arbi-Engine: {e}")
     finally:
         await scanner.close()
 
