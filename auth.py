@@ -1,32 +1,30 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
-import hashlib
-import hmac
+
 import time
-from typing import Any, Dict
+import hmac
+import hashlib
+from typing import Dict, Any
 
-from .constants import VERTEX_REST_URL
-
-
-class StealthAuthenticator:
+class HyperliquidAuth:
     """
-    Handles secure L2 cryptographic signing for V2.1 Gateway.
-    Keeps private keys entirely in-memory during execution.
+    Crafted authentication for Hyperliquid L2.
+    Focus: Minimalist, stealth, and modular.
     """
+    def __init__(self, wallet_address: str, private_key: str = None):
+        self.wallet_address = wallet_address
+        self.private_key = private_key
 
-    def __init__(self, api_key: str, api_secret: str):
-        self._api_key = api_key
-        self._api_secret = api_secret
-
-    def generate_signature(self, payload: str) -> str:
-        """ Generates HMAC SHA256 signature with absolute stealth precision. """
-        return hmac.new(self._api_secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256).hexdigest()
-        
-    def get_auth_headers(self) -> Dict[str, Any]:
-        """ Constructs headers without leaking core secrets. """
-        timestamp = str(int(time.time() * 1000))
-        signature = self.generate_signature(timestamp)
+    def get_auth_headers(self) -> Dict[str, str]:
+        """
+        Returns basic headers for Hyperliquid API.
+        """
         return {
-            "X-API-KEY": self._api_key,
-            "X-TIMESTAMP": timestamp,
-            "X-SIGNATURE": signature
+            "Content-Type": "application/json",
+            "User-Agent": "Hummingbot-V2.1-Stealth"
         }
+
+    def sign_l1_action(self, action: Dict[str, Any], nonce: int) -> str:
+        # TODO: Integrate the EIP-712 signing logic from cleanroom/hyperliquid_utils.py
+        pass
+
+print("✅ auth.py runko luotu.")
