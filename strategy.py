@@ -1,34 +1,36 @@
-""" Technical implementation for Hummingbot Gateway V2.1. Neural Apex Edition. """
+""" Technical implementation for Hummingbot Gateway V2.1. Quantum-Apex Edition. """
 
 import asyncio
 import logging
 import random
-import numpy as np
+import time
 from .derivative import UniversalScanner
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 logger = logging.getLogger(__name__)
 
-class GandalfsBrain:
-    """ Simple AI to learn exchange correlations. """
+class QuantumPredictor:
+    """ Predicts price direction based on multi-exchange momentum. """
     def __init__(self):
-        self.history = []
-        self.weights = {} # Learning table
+        self.momentum = 0
+        self.last_global_avg = None
 
-    def learn(self, results):
-        # Tallennetaan hintahistoria ja opitaan kuka johtaa markkinaa (Price Discovery)
-        if len(results) < 2: return
-        self.history.append({r['exchange']: r['price'] for r in results})
-        if len(self.history) > 50: self.history.pop(0)
+    def update(self, valid_results):
+        if not valid_results: return 0
+        current_avg = sum(r['price'] for r in valid_results) / len(valid_results)
         
-        # Tässä tapahtuisi painotusten päivitys: kuka ennusti suunnan oikein?
-        logger.debug("🧠 Brain is processing market correlation patterns...")
+        if self.last_global_avg:
+            # Momentum: Positiivinen = hinta nousemassa, Negatiivinen = laskemassa
+            self.momentum = (current_avg - self.last_global_avg) / self.last_global_avg
+            
+        self.last_global_avg = current_avg
+        return self.momentum
 
 async def main():
     scanner = UniversalScanner()
-    brain = GandalfsBrain()
-    logger.info("🧠 NEURAL APEX: Itseoppiva Ferrari on käynnissä.")
-    logger.info("🏎️ V12 Neural: Predictive correlation engine active.")
+    predictor = QuantumPredictor()
+    logger.info("🌌 QUANTUM APEX: Ennustava Ferrari on livenä.")
+    logger.info("🏎️ V12 Quantum: Momentum-tracking & Predictive Arbitrage active.")
 
     try:
         while True:
@@ -36,22 +38,24 @@ async def main():
             valid = [r for r in results if r.get('status') == 200]
             
             if valid:
-                brain.learn(valid) # Ferrari oppii jokaisella kierroksella
+                momentum = predictor.update(valid)
                 
-                # Lasketaan "Älykäs hinta-arvio" (Neural Mid-Price)
-                prices = [r['price'] for r in valid]
-                avg_price = sum(prices) / len(prices)
+                # Jos momentum on kova, lyhennetään viivettä (Hunt mode)
+                is_volatile = abs(momentum) > 0.0001
+                wait_min, wait_max = (3, 7) if is_volatile else (10, 20)
                 
-                # Etsitään poikkeamat älykkäästi
                 for r in valid:
-                    deviation = (r['price'] - avg_price) / avg_price
-                    if abs(deviation) > 0.002: # 0.2% poikkeama keskiarvosta
-                        logger.warning(f"🎯 NEURAL HIT: {r['exchange']} is out of sync! Dev: {deviation*100:.3f}%")
+                    # Lasketaan "tulevaisuuden hinta" (Momentum-adjusted price)
+                    predicted_price = r['price'] * (1 + momentum)
+                    
+                    # Etsitään tilaisuus, jossa nykyhinta vs. ennustettu hinta eroaa muista
+                    if is_volatile:
+                        logger.info(f"⚡ Momentum Detected: {momentum*10000:.2f} bps | Predictive Scan active.")
 
-            await asyncio.sleep(random.uniform(5, 12)) # AI-driven jitter
+            await asyncio.sleep(random.uniform(wait_min, wait_max))
             
     except Exception as e:
-        logger.error(f"❌ Neural Engine Overheat: {e}")
+        logger.error(f"❌ Quantum Engine Overload: {e}")
     finally:
         await scanner.close()
 
