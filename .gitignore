@@ -5,3 +5,11 @@ __pycache__/
 .env
 signals_output.json
 myyntidata.csv
+secrets.json
+*.log
+*.db
+*.txt
+*.csv
+ferrari_*.py
+neural_*.py
+__pycache__/

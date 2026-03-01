@@ -16,3 +16,9 @@ This connector provides a high-performance bridge between the **Hummingbot Gatew
 
 ## Status: PRODUCTION READY
 This connector has passed all internal **Consistency Utils** quality gates and is compliant with PEP8 and Black formatting standards.
+
+## 🛡️ Engineering & Quality Assurance
+This project utilizes automated **CI/CD pipelines (GitHub Actions)** to enforce:
+* **PEP8 Standards:** Strict linting and syntax checks on every commit.
+* **Security Audits:** Automated vulnerability scanning (Bandit).
+* **Build Integrity:** Ensuring code stability before deployment.
