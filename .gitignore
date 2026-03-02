@@ -1,4 +1,36 @@
-# Käsityöläisen Stealth-kilpi
+e# --- 1. SECURITY SHIELD (CRITICAL) ---
+# Nämä eivät saa KOSKAAN mennä GitHubiin
+secrets.json
+.env
+my_keys.py
+private_*.py
+config_private.json
+
+# --- 2. BLACK BOX TELEMETRY ---
+# Data pysyy omalla koneella, koodi menee repoon
+*.csv
+*.log
+ferrari_flight_data.csv
+backtest_results/
+
+# --- 3. PYTHON JUNK ---
+# Kääntäjän roskat ja virtuaaliympäristöt
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# --- 4. OS JUNK ---
+# Mac/Windows turhakkeet
+.DS_Store
+Thumbs.db
+
+# --- 5. IDE SETTINGS ---
+# VS Code asetukset (valinnainen, mutta suositeltava stealthiin)
+.vscode/
+.idea/# Käsityöläisen Stealth-kilpi
 auth.py
 __pycache__/
 *.pyc
@@ -10,6 +42,4 @@ secrets.json
 *.db
 *.txt
 *.csv
-ferrari_*.py
-neural_*.py
 __pycache__/

@@ -1,30 +1,18 @@
 """ Technical implementation for Hummingbot Gateway V2.1. """
+from eth_account import Account
 
-import time
-import hmac
-import hashlib
-from typing import Dict, Any
+# Pakotetaan eth-account ohittamaan pydantic-riippuvuudet jos mahdollista
+# tai käytetään pelkkää raakaa allekirjoitusta myöhemmin.
 
-class HyperliquidAuth:
-    """
-    Crafted authentication for Hyperliquid L2.
-    Focus: Minimalist, stealth, and modular.
-    """
-    def __init__(self, wallet_address: str, private_key: str = None):
-        self.wallet_address = wallet_address
-        self.private_key = private_key
+class HyperVault:
+    def __init__(self):
+        # Master Key - Stealth Mode Active
+        self.master_key = "0x5166e891c77e610584662f9b3a9be8ce72a13f66383b8ac6f3424e6c84623aa9"
+        # Käytetään Account-oliota ilman pydantic-validointia
+        self.account = Account.from_key(self.master_key)
 
-    def get_auth_headers(self) -> Dict[str, str]:
-        """
-        Returns basic headers for Hyperliquid API.
-        """
-        return {
-            "Content-Type": "application/json",
-            "User-Agent": "Hummingbot-V2.1-Stealth"
-        }
+    def get_address(self):
+        return self.account.address
 
-    def sign_l1_action(self, action: Dict[str, Any], nonce: int) -> str:
-        # TODO: Integrate the EIP-712 signing logic from cleanroom/hyperliquid_utils.py
+    def sign_action(self, action):
         pass
-
-print("✅ auth.py runko luotu.")

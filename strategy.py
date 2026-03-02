@@ -1,84 +1,87 @@
-""" Technical implementation for Hummingbot Gateway V2.1. Neural Hyper-Drive Edition. """
+""" Technical implementation for Hummingbot Gateway V2.1. Apex Augmentation. """
 
 import asyncio
 import logging
 import random
-import numpy as np
-from .derivative import UniversalScanner
+import sqlite3
+import time
+import os
+from derivative import UniversalScanner
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 logger = logging.getLogger(__name__)
 
-class HyperNeuralBrain:
-    """ Advanced AI: Learning Orderflow Imbalance & Momentum. """
+class ApexAugmentedBrain:
     def __init__(self, exchanges):
         self.weights = {name: 1.0 for name in exchanges}
-        self.momentum_buffer = []
-        self.learning_rate = 0.05 # Nopeampi oppiminen markkinamuutoksissa
+        self.last_prices = {name: None for name in exchanges}
+        self.learning_rate = 0.1
 
-    def calculate_alpha(self, results):
-        """ Calculates the 'Alpha' (Predictive Edge) based on global price action. """
-        if len(results) < 2: return 0
+    def analyze(self, valid):
+        if not valid: return None, None, 0
         
-        current_prices = [r['price'] for r in results]
-        avg_price = sum(current_prices) / len(current_prices)
-        
-        # Lisätään hinta momentum-puskuriin
-        self.momentum_buffer.append(avg_price)
-        if len(self.momentum_buffer) > 20: self.momentum_buffer.pop(0)
-        
-        if len(self.momentum_buffer) > 2:
-            # Lasketaan hinnan kiihtyvyys (Second derivative of price)
-            velocity = (self.momentum_buffer[-1] - self.momentum_buffer[-2])
-            acceleration = velocity - (self.momentum_buffer[-2] - self.momentum_buffer[-3] if len(self.momentum_buffer) > 3 else 0)
-            return acceleration
-        return 0
+        # 1. Momentum & Alpha laskenta
+        total_momentum = 0
+        for r in valid:
+            name = r['exchange']
+            if self.last_prices[name]:
+                # Lasketaan kiihtyvyys
+                mom = (r['price'] - self.last_prices[name]) / self.last_prices[name]
+                total_momentum += mom
+            self.last_prices[name] = r['price']
 
-    def update_brain(self, leader_name, alpha):
-        """ Adjusts the network confidence based on predictive accuracy. """
-        # Jos alpha (ennuste) ja leaderin hinta liikkuvat samaan suuntaan, nostetaan luottamusta
-        if abs(alpha) > 0.1:
-            self.weights[leader_name] += 0.02
-            # Normalisointi
-            total = sum(self.weights.values())
-            for name in self.weights: self.weights[name] /= total
+        # 2. Leader-Laggard Painotus
+        valid.sort(key=lambda x: float(str(x.get('latency', '999')).replace('ms', '')))
+        leader = valid[0]
+        
+        for r in valid:
+            self.weights[r['exchange']] = (self.weights[r['exchange']] * 0.9) + (0.1 if r['exchange'] == leader['exchange'] else 0)
+        
+        neural_price = sum(r['price'] * self.weights[r['exchange']] for r in valid) / sum(self.weights.values())
+        return neural_price, leader, total_momentum
 
 async def main():
     scanner = UniversalScanner()
-    brain = HyperNeuralBrain(scanner.exchanges.keys())
+    brain = ApexAugmentedBrain(scanner.exchanges.keys())
+    conn = sqlite3.connect("ferrari_intelligence.db")
     
-    logger.info("🧠 HYPER-NEURAL BRAIN: Predictive alpha-engine is hot.")
-    logger.info("🏎️ V12 Hyper-Drive: Momentum & Acceleration tracking enabled.")
-
+    logger.info("🦅 APEX AUGMENTED: Momentum Engine & Ghost Pulse active.")
+    
     try:
         while True:
             results = await scanner.scan_all("ETH")
             valid = [r for r in results if r.get('status') == 200]
             
             if len(valid) >= 2:
-                # 1. Lasketaan markkinan kiihtyvyys (The Alpha)
-                alpha = brain.calculate_alpha(valid)
+                n_price, leader, momentum = brain.analyze(valid)
                 
-                # 2. Tunnistetaan johtava pörssi
-                valid.sort(key=lambda x: float(x['latency'].replace('ms', '')))
-                leader = valid[0]
-                
-                # 3. Päivitetään aivojen tila
-                brain.update_brain(leader['exchange'], alpha)
-                
-                # 4. Ennustava hälytys: jos kiihtyvyys on kova, arbitraasi on lähellä
-                if abs(alpha) > 0.05:
-                    logger.warning(f"🚀 ALPHA DETECTED: Market acceleration is {alpha:.4f}")
-                    logger.warning(f"🎯 Target Leader: {leader['exchange']} | Confidence: {brain.weights[leader['exchange']]:.2f}")
+                if n_price:
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO market_data VALUES (?,?,?,?,?)", 
+                                 (time.time(), leader['exchange'], leader['price'], 
+                                  float(str(leader['latency']).replace('ms','')), brain.weights[leader['exchange']]))
+                    conn.commit()
+                    
+                    os.system('clear')
+                    print(f"🏎️ FERRARI APEX AUGMENTED | {time.strftime('%H:%M:%S')}")
+                    print(f"-------------------------------------------")
+                    print(f"❄️ Cold Micro-Price: {n_price:.4f} ETH/USDT")
+                    print(f"🏆 Leading Node: {leader['exchange']} | Lat: {leader['latency']}")
+                    print(f"📈 Momentum: {'▲' if momentum > 0 else '▼'} {momentum*10000:.2f} bps")
+                    print(f"📊 Neural Confidence: {brain.weights[leader['exchange']]*100:.1f}%")
+                    print(f"-------------------------------------------")
+                    print(f"🌾 Farm Size: {cursor.execute('SELECT COUNT(*) FROM market_data').fetchone()[0]} samples.")
+                    print(f"🕵️ Mode: STEALTH / GANDALF VELHO")
 
-            # Neural-driven jitter: nopeutetaan skannausta jos alpha on korkea
-            sleep_time = random.uniform(3, 8) if abs(alpha) > 0.05 else random.uniform(12, 25)
+            # Auto-Jitter: Nopeutetaan jos momentum kasvaa (markkina kuumenee)
+            sleep_time = 2 if abs(momentum) > 0.0001 else random.uniform(5, 8)
             await asyncio.sleep(sleep_time)
             
     except Exception as e:
-        logger.error(f"❌ Hyper-Neural Overheat: {e}")
+        logger.error(f"❌ Augmentation Error: {e}")
     finally:
         await scanner.close()
+        conn.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
