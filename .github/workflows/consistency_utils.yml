@@ -1,8 +1,0 @@
-name: testit
-on: [push]
-jobs:
-  tsekkaus:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: python security_guard.py
