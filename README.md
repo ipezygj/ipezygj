@@ -1,27 +1,36 @@
-# Quantitative Connectivity & Research Framework
+### Hi, I'm Ilpo 👋
 
-Technical implementation focused on high-fidelity data acquisition and standardized connectivity layers for decentralized financial protocols.
+**AI-assisted builder.** I ship real software by directing AI tools end to end —
+idea to deployed product. Early-career, AI-assisted (not a senior unassisted
+engineer); my strength is **shipping fast and operating what I build.** Open to
+**junior / trainee** roles where building with AI is valued.
 
-## Overview
-
-This repository serves as a modular gateway for interfacing with various EVM-compatible liquidity layers. The architecture prioritizes low-latency data stream synchronization and robust error-handling mechanisms for complex execution environments.
-
-### Core Architecture Components
-
-* **Standardized Connectors:** Modular interface layers for multi-protocol support, ensuring consistent data structures across disparate sources.
-* **Latency-Optimized Stream Handlers:** Internal logic designed to maintain state-consistency during high-volatility events.
-* **Telemetry & Logging:** Comprehensive diagnostic tools for real-time monitoring of operational integrity and data throughput.
-
-### Technical Specifications
-
-* **Standard:** Hummingbot Gateway V2.1 compatible integration.
-* **Compliance:** PEP8 and Black-standard Python implementation.
-* **Design Pattern:** Modular derivative architecture with strict separation of concerns between connectivity and data processing.
-
-## Status
-
-**Development Phase:** Research & Connectivity Validation.
-The core logic in this public repository is restricted to connectivity modules and diagnostic utilities. 
+📍 Finland · Remote · 🇫🇮 Finnish (native) · 🇬🇧 English (professional)
 
 ---
-*Disclaimer: This project is for private research purposes only.*
+
+#### 🚀 Things I've built (AI-assisted, end to end)
+
+**📱 Babble Parenting** — a parenting mobile app
+Sound recording, feeding timers, calendar, and memory storage. Taken from concept to a published product.
+
+**⛓️ Ranger Sovereign Vault** — Solana · 🏆 Honorable Mention, 2026 hackathon
+A delta-neutral funding-arbitrage vault, deployed to Solana mainnet.
+
+**🤖 Chimera** — trading automation
+Event-driven design, real-time market data, risk controls, parallel strategy testing.
+
+**🛡️ Cross-chain security tooling** — Slither · Foundry
+Static analysis that flags common smart-contract vulnerability patterns across several chains, with automated proof-of-concept checks.
+
+**🔔 Telegram automation bots** — event-driven monitoring & notifications.
+
+> Source is private — I'm happy to **screen-share any of these live** and walk through how they work.
+
+---
+
+#### 🛠️ How I work
+I direct AI tools (Claude) to design, write, debug, and ship software, and I operate the resulting systems. Honest about my level; fast learner.
+
+#### 📫 Reach me
+ipezygj2@gmail.com
