@@ -11,11 +11,11 @@ engineer); my strength is **shipping fast and operating what I build.** Open to
 
 #### 🚀 Things I've built (AI-assisted, end to end)
 
-**📱 Babble Parenting** — a parenting mobile app
-Sound recording, feeding timers, calendar, and memory storage. Taken from concept to a published product.
-
 **⛓️ Ranger Sovereign Vault** — Solana · 🏆 Honorable Mention, 2026 hackathon
 A delta-neutral funding-arbitrage vault, deployed to Solana mainnet.
+
+**📱 Babble Parenting** — a parenting mobile app
+Sound recording, feeding timers, calendar, and memory storage. Taken from concept to a published product.
 
 **🤖 Chimera** — trading automation
 Event-driven design, real-time market data, risk controls, parallel strategy testing.
