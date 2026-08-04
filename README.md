@@ -25,7 +25,19 @@ Static analysis that flags common smart-contract vulnerability patterns across s
 
 **🔔 Telegram automation bots** — event-driven monitoring & notifications.
 
-> Source is private — I'm happy to **screen-share any of these live** and walk through how they work.
+#### 🔎 Public and checkable
+
+**[ControlBattery](https://github.com/ipezygj/ControlBattery)** — Lean 4 · mathlib
+The statistics a control battery relies on, proved instead of asserted: Šidák never
+exceeds Bonferroni, and Bonferroni's union bound needs no independence assumption.
+Every result is kernel-checked and CI rejects any proof resting on `sorry`.
+
+**[numguard](https://github.com/ipezygj/numguard)** · **[evalgate](https://github.com/ipezygj/evalgate)** · **[agent-guard](https://github.com/ipezygj/agent-guard)**
+MCP servers agents can call: verify a number before asserting it, run the statistical
+checks that keep eval claims honest, and check an agent's action before it takes it.
+
+> The projects above this line have private source — I'm happy to **screen-share any of
+> them live** and walk through how they work.
 
 ---
 
