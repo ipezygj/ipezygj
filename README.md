@@ -18,11 +18,21 @@ Finland · remote · Finnish (native), English (professional)
 Rank collapse and base-rate collapse, measured across four domains.
 `10.5281/zenodo.22109473`
 
-**[The Catalogue Is the Instrument](https://doi.org/10.5281/zenodo.22124423)**
-How the choice of sign inventory moves the statistics of an undeciphered script
-(rongorongo) — including the ligature artefact my own metric produced before I
-caught it. `10.5281/zenodo.22124423` · code:
+**[How the Choice of Sign Inventory Moves the Statistics of an Undeciphered Script](https://doi.org/10.5281/zenodo.22057706)**
+Three published readings of one rongorongo corpus move the entropy statistic 4.1 times
+further than the structure it exists to detect — including the ligature artefact my own
+metric produced before I caught it. `10.5281/zenodo.22057706` (concept DOI, resolves to
+the current version) · code:
 **[rongorongo-catalogue-audit](https://github.com/ipezygj/rongorongo-catalogue-audit)**
+
+**[How Much of a Published Statistic Belongs to the Choice Upstream of It](https://doi.org/10.5281/zenodo.22162050)**
+The method behind the audits below, stated once: name the coding decision, assemble the
+codings other people published, recompute the statistic *and its null* under each, and
+report the movement against the effect the statistic exists to detect. Six worked cases
+across epigraphy, astronomy, archaeoastronomy, two leaderboards and clinical variant
+prediction — two of which return less than the audit set out to find — and a catalogue
+of the five ways the procedure misleads, each an error I made running it.
+`10.5281/zenodo.22162050`
 
 ### Audits — code, data, and the reproduction
 
