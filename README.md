@@ -14,9 +14,9 @@ Finland · remote · Finnish (native), English (professional)
 
 ### Published
 
-**[The Benchmark Number Is Not the Deployment Number](https://doi.org/10.5281/zenodo.22109473)**
+**[The Benchmark Number Is Not the Deployment Number](https://doi.org/10.5281/zenodo.22109472)**
 Rank collapse and base-rate collapse, measured across four domains.
-`10.5281/zenodo.22109473`
+`10.5281/zenodo.22109472`
 
 **[How the Choice of Sign Inventory Moves the Statistics of an Undeciphered Script](https://doi.org/10.5281/zenodo.22057706)**
 Three published readings of one rongorongo corpus move the entropy statistic 4.1 times
